@@ -1,0 +1,210 @@
+baseURL = 'https://zhiyuan1i.github.io'
+defaultContentLanguage = 'zh'
+title = 'Zhiyuan Li'
+theme = 'PaperMod'
+
+enableRobotsTXT = true
+buildDrafts = false
+buildFuture = false
+buildExpired = false
+# 本地开发时使用: hugo server -D --baseURL http://localhost:1313
+
+[minify]
+disableXML = true
+minifyOutput = true
+
+[params]
+env = 'production'
+title = 'Zhiyuan Li'
+author = 'Zhiyuan Li'
+images = ['images/papermod-cover.png']
+defaultTheme = 'auto'
+disableThemeToggle = false
+
+ShowReadingTime = true
+ShowShareButtons = false
+ShowPostNavLinks = true
+ShowBreadCrumbs = true
+ShowCodeCopyButtons = true
+ShowWordCount = true
+ShowRssButtonInSectionTermList = true
+UseHugoToc = true
+disableSpecial1stPost = false
+disableScrollToTop = false
+comments = false
+hidemeta = false
+hideSummary = false
+showtoc = true
+tocopen = false
+
+[params.assets]
+favicon = '/favicon.ico'
+favicon16x16 = '/favicon-16x16.png'
+favicon32x32 = '/favicon-32x32.png'
+apple_touch_icon = '/apple-touch-icon.png'
+safari_pinned_tab = '/safari-pinned-tab.svg'
+
+[params.label]
+text = 'Home'
+icon = '/apple-touch-icon.png'
+iconHeight = 35
+
+[params.profileMode]
+enabled = true
+title = 'Zhiyuan Li'
+imageUrl = 'images/profile.png'
+imageWidth = 120
+imageHeight = 120
+imageTitle = 'profile image'
+
+[params.cover]
+hidden = true
+hiddenInList = true
+hiddenInSingle = true
+
+[params.editPost]
+URL = 'https://github.com/zhiyuan1i/zhiyuan1i.github.io/tree/main/content'
+Text = 'Suggest Changes'
+appendFilePath = true
+
+[params.fuseOpts]
+isCaseSensitive = false
+shouldSort = true
+location = 0
+distance = 1000
+threshold = 0.4
+minMatchCharLength = 0
+limit = 10
+keys = ['title', 'permalink', 'summary', 'content']
+
+# 多语言配置
+[languages]
+[languages.zh]
+languageName = '中文'
+languageCode = 'zh-CN'
+weight = 1
+contentDir = 'content/zh'
+
+[languages.zh.params]
+languageName = '中文'
+description = 'AI Infra 工程师 | 专注 Linear Attention 高效实现 | 参与了 KDA 的开发'
+keywords = ['AI Infra', 'Linear Attention', 'Kimi Delta Attention', 'KDA', 'DPLR', 'RWKV', 'CUDA优化']
+DateFormat = '2006年1月2日'
+
+[[languages.zh.menus.main]]
+identifier = 'home'
+name = '主页'
+url = '/'
+weight = 10
+[[languages.zh.menus.main]]
+identifier = 'posts'
+name = '文章'
+url = '/posts/'
+weight = 20
+[[languages.zh.menus.main]]
+identifier = 'archives'
+name = '归档'
+url = '/archives/'
+weight = 30
+[[languages.zh.menus.main]]
+identifier = 'tags'
+name = '标签'
+url = '/tags/'
+weight = 40
+[[languages.zh.menus.main]]
+identifier = 'about'
+name = '关于'
+url = '/about/'
+weight = 50
+
+[languages.en]
+languageName = 'English'
+languageCode = 'en-US'
+weight = 2
+contentDir = 'content/en'
+
+[languages.en.params]
+languageName = 'English'
+description = 'AI Infra Engineer | Focused on efficient Linear Attention implementation | Contributed to KDA development'
+keywords = ['AI Infra', 'Linear Attention', 'Kimi Delta Attention', 'KDA', 'DPLR', 'RWKV', 'CUDA Optimization']
+DateFormat = 'January 2, 2006'
+
+[[languages.en.menus.main]]
+identifier = 'home'
+name = 'Home'
+url = '/en/'
+weight = 10
+[[languages.en.menus.main]]
+identifier = 'posts'
+name = 'Posts'
+url = '/en/posts/'
+weight = 20
+[[languages.en.menus.main]]
+identifier = 'archives'
+name = 'Archives'
+url = '/en/archives/'
+weight = 30
+[[languages.en.menus.main]]
+identifier = 'tags'
+name = 'Tags'
+url = '/en/tags/'
+weight = 40
+[[languages.en.menus.main]]
+identifier = 'about'
+name = 'About'
+url = '/en/about/'
+weight = 50
+
+# 中文参数
+[[languages.zh.params.profileMode.buttons]]
+name = '文章'
+url = 'posts'
+[[languages.zh.params.profileMode.buttons]]
+name = '标签'
+url = 'tags'
+[[languages.zh.params.socialIcons]]
+name = 'github'
+url = 'https://github.com/zhiyuan1i'
+[[languages.zh.params.socialIcons]]
+name = 'zhihu'
+url = 'https://www.zhihu.com/people/f6hoks'
+[[languages.zh.params.socialIcons]]
+name = 'email'
+url = 'mailto:lizhiyuan@moonshot.cn'
+[[languages.zh.params.socialIcons]]
+name = 'rss'
+url = 'index.xml'
+
+# 英文参数
+[[languages.en.params.profileMode.buttons]]
+name = 'Posts'
+url = 'posts'
+[[languages.en.params.profileMode.buttons]]
+name = 'Tags'
+url = 'tags'
+[[languages.en.params.socialIcons]]
+name = 'github'
+url = 'https://github.com/zhiyuan1i'
+[[languages.en.params.socialIcons]]
+name = 'email'
+url = 'mailto:lizhiyuan@moonshot.cn'
+[[languages.en.params.socialIcons]]
+name = 'rss'
+url = 'index.xml'
+
+[outputs]
+home = ['HTML', 'RSS', 'JSON']
+
+[markup]
+[markup.highlight]
+style = 'github'
+lineNos = true
+codeFences = true
+guessSyntax = true
+hl_Lines = ''
+lineNoStart = 1
+noClasses = false
+tabWidth = 4
+[markup.goldmark]
+[markup.goldmark.renderer]
+unsafe = true
