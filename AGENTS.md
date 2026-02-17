@@ -59,7 +59,73 @@ description: 'Article description'
 ---
 ```
 
-### 3. Translation Guidelines
+### 3. Math Equation Support
+
+This blog supports LaTeX math rendering using KaTeX.
+
+#### Configuration Files
+
+- `hugo.toml` - Goldmark passthrough extension configuration
+- `layouts/partials/math.html` - KaTeX CSS and JS loading
+- `layouts/partials/extend_head.html` - Conditional math loading
+
+#### How to Enable Math in Posts
+
+Add `math: true` to the frontmatter:
+
+```yaml
+---
+title: 'My Post'
+date: '2026-02-17T00:00:00Z'
+math: true  # Enable math rendering
+tags: ['math']
+---
+```
+
+#### Supported Syntax
+
+**Inline math** (use `\(` `\)` or `$` `$`):
+```markdown
+The complexity is $O(n^2)$ or \(O(n^2)\).
+```
+
+**Block math** (use `$$`):
+```markdown
+$$
+\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+$$
+```
+
+**Multi-line aligned equations**:
+```markdown
+$$
+\begin{aligned}
+S_i &= S_{i-1} + \phi(K_i)^T V_i \\
+Z_i &= Z_{i-1} + \phi(K_i)^T \\
+O_i &= \frac{\phi(Q_i) S_i}{\phi(Q_i) Z_i}
+\end{aligned}
+$$
+```
+
+**Matrices**:
+```markdown
+$$
+\mathbf{O} = \begin{bmatrix} 
+o_{11} & o_{12} & \cdots & o_{1d} \\
+o_{21} & o_{22} & \cdots & o_{2d} \\
+\vdots & \vdots & \ddots & \vdots \\
+o_{n1} & o_{n2} & \cdots & o_{nd}
+\end{bmatrix}
+$$
+```
+
+#### Important Notes
+
+1. **Avoid empty lines inside `$$` blocks** - This can cause passthrough parsing issues
+2. **Avoid very complex nested multi-line formulas** - May not render correctly; simplify to single-line or split into multiple equations
+3. **Demo post**: See `content/zh/posts/math-demo.md` for examples
+
+### 4. Translation Guidelines
 
 When translating from Chinese to English:
 
@@ -73,7 +139,7 @@ When translating from Chinese to English:
 
 3. **URL structure**: English content has `/en/` prefix automatically
 
-### 4. Git Workflow
+### 5. Git Workflow
 
 ```bash
 # Check status
@@ -89,7 +155,7 @@ git commit -m "feat: add post about xxx"
 git push origin main
 ```
 
-### 5. File Organization
+### 6. File Organization
 
 ```
 content/
@@ -105,7 +171,7 @@ content/
         └── my-post.md
 ```
 
-### 6. Key Configuration
+### 7. Key Configuration
 
 Multi-language setup in `hugo.toml`:
 - `defaultContentLanguage = 'zh'` - Chinese is default
@@ -131,7 +197,7 @@ weight = 10
 
 **Note**: Must use `[[languages.zh.menus.main]]` not `[[languages.zh.menu.main]]`!
 
-### 7. Notes for AI Assistants
+### 8. Notes for AI Assistants
 
 1. **Always use proxy** when downloading external resources:
    ```bash
