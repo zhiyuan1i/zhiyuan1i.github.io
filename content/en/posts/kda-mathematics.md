@@ -3,6 +3,7 @@ title: 'KDA (Kimi Delta Attention): From Matrix Multiplication to Affine Transfo
 date: '2026-02-17T03:00:00Z'
 draft: false
 math: true
+translationKey: kda-mathematics
 tags: ['KDA', 'Linear Attention', 'Delta Rule', 'Affine Transformation', 'Kimi']
 categories: ['Technical']
 description: 'A deep dive into the chunk-wise parallel algorithm of KDA, establishing the theoretical framework of Affine transformations from basic matrix multiplication lemmas'

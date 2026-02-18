@@ -2,6 +2,7 @@
 title: '本站技术栈'
 date: '2026-02-16T00:00:00Z'
 draft: false
+translationKey: tech-stack
 tags: ['Hugo', 'PaperMod', 'GitHub Pages']
 categories: ['随笔']
 description: '介绍本站使用的技术栈和搭建过程'

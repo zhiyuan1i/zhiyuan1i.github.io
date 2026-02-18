@@ -3,6 +3,7 @@ title: 'KDA（Kimi Delta Attention）的数学原理：从矩阵乘法到 Affine
 date: '2026-02-17T03:00:00Z'
 draft: false
 math: true
+translationKey: kda-mathematics
 tags: ['KDA', 'Linear Attention', 'Delta Rule', 'Affine 变换', 'Kimi', 'Kimi Delta Attention']
 categories: ['技术']
 description: '深入推导 KDA 的 chunk-wise 并行算法，从矩阵乘法的基本引理出发，建立 Affine 变换的理论框架，理解 WY 表示和 CP 并行的数学基础'
