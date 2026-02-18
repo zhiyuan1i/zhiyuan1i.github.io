@@ -2,6 +2,7 @@
 title: 'Tech Stack'
 date: '2026-02-16T00:00:00Z'
 draft: false
+translationKey: tech-stack
 tags: ['Hugo', 'PaperMod', 'GitHub Pages']
 categories: ['Notes']
 description: 'Introduction to the tech stack used to build this site'
