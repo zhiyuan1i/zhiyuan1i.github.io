@@ -61,15 +61,23 @@ $$
 
 ### Linear Attention 的动机
 
-Linear Attention [^6] 的核心洞察是：**如果我们去掉 Softmax，注意力可以重写为 RNN 形式**：
+Linear Attention [^6] 通过去掉 Softmax，将注意力重写为 RNN 形式。其完整形式包含分子（值累积）和分母（归一化累积）：
 
-$$\mathbf{o}_t = \frac{\phi(\mathbf{q}_t)^T \sum_{j=1}^{t} \phi(\mathbf{k}_j) \mathbf{v}_j^T}{\phi(\mathbf{q}_t)^T \sum_{j=1}^{t} \phi(\mathbf{k}_j)}$$
+$$\mathbf{o}_t = \frac{\phi(\mathbf{q}_t)^T \mathbf{S}_t}{\phi(\mathbf{q}_t)^T \mathbf{Z}_t}$$
 
-这可以进一步简化为递推形式：
+其中两个状态分别递推更新：
+$$
+\begin{aligned}
+\mathbf{S}_t &= \mathbf{S}_{t-1} + \phi(\mathbf{k}_t) \otimes \mathbf{v}_t \\
+\mathbf{Z}_t &= \mathbf{Z}_{t-1} + \phi(\mathbf{k}_t)
+\end{aligned}
+$$
 
-$$\mathbf{S}_t = \mathbf{S}_{t-1} + \phi(\mathbf{k}_t) \mathbf{v}_t^T, \quad \mathbf{o}_t = \phi(\mathbf{q}_t)^T \mathbf{S}_t$$
+这里 $\mathbf{S}_t \in \mathbb{R}^{d_k \times d_v}$ 是状态矩阵，$\mathbf{Z}_t \in \mathbb{R}^{d_k}$ 是归一化向量。**在实际应用中，分母的归一化可以通过后续的 RMSNorm 等层近似，因此常被省略以简化计算**，得到更简洁的形式：
 
-其中 $\mathbf{S}_t \in \mathbb{R}^{d_k \times d_v}$ 是状态矩阵。**这种形式的复杂度仅为 $O(N)$，且推理时只需要维护固定大小的状态矩阵**
+$$\mathbf{S}_t = \mathbf{S}_{t-1} + \phi(\mathbf{k}_t) \otimes \mathbf{v}_t, \quad \mathbf{o}_t = \phi(\mathbf{q}_t)^T \mathbf{S}_t$$
+
+这种形式的复杂度仅为 $O(N)$，且推理时只需要维护固定大小的状态矩阵。
 
 ### 本文的工作
 

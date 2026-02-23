@@ -60,15 +60,23 @@ For long sequence tasks (e.g., document understanding, code generation, multi-tu
 
 ### Motivation for Linear Attention
 
-The core insight of Linear Attention [^6] is: **if we remove Softmax, attention can be rewritten in RNN form**:
+Linear Attention [^6] removes Softmax and rewrites attention in RNN form. The complete form includes both numerator (value accumulation) and denominator (normalization accumulation):
 
-$$\mathbf{o}_t = \frac{\phi(\mathbf{q}_t)^T \sum_{j=1}^{t} \phi(\mathbf{k}_j) \mathbf{v}_j^T}{\phi(\mathbf{q}_t)^T \sum_{j=1}^{t} \phi(\mathbf{k}_j)}$$
+$$\mathbf{o}_t = \frac{\phi(\mathbf{q}_t)^T \mathbf{S}_t}{\phi(\mathbf{q}_t)^T \mathbf{Z}_t}$$
 
-This can be further simplified to a recurrent form:
+where both states are updated recursively:
+$$
+\begin{aligned}
+\mathbf{S}_t &= \mathbf{S}_{t-1} + \phi(\mathbf{k}_t) \otimes \mathbf{v}_t \\
+\mathbf{Z}_t &= \mathbf{Z}_{t-1} + \phi(\mathbf{k}_t)
+\end{aligned}
+$$
 
-$$\mathbf{S}_t = \mathbf{S}_{t-1} + \phi(\mathbf{k}_t) \mathbf{v}_t^T, \quad \mathbf{o}_t = \phi(\mathbf{q}_t)^T \mathbf{S}_t$$
+Here $\mathbf{S}_t \in \mathbb{R}^{d_k \times d_v}$ is the state matrix and $\mathbf{Z}_t \in \mathbb{R}^{d_k}$ is the normalizer vector. **In practice, the denominator normalization can be approximated by subsequent layers such as RMSNorm, so it is often omitted to simplify computation**, yielding a cleaner form:
 
-where $\mathbf{S}_t \in \mathbb{R}^{d_k \times d_v}$ is the state matrix. **This form has only $O(N)$ complexity, and inference only requires maintaining a fixed-size state matrix.**
+$$\mathbf{S}_t = \mathbf{S}_{t-1} + \phi(\mathbf{k}_t) \otimes \mathbf{v}_t, \quad \mathbf{o}_t = \phi(\mathbf{q}_t)^T \mathbf{S}_t$$
+
+This form has $O(N)$ complexity, and inference only requires maintaining a fixed-size state matrix.
 
 ### Contributions of This Article
 
