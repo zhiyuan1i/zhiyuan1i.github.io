@@ -216,9 +216,14 @@ weight = 10
 
 4. **Modest tone**: When referencing author's work (KDA, etc.), use "participated in" rather than "core developer"
 
-5. **External links**: Verify links are accessible before adding
+5. **Technical writing style**:
+   - Use plain, factual language. Avoid buzzwords like "核心洞察" (core insight), "本质" (essence), "革命性" (revolutionary)
+   - Example: "Linear Attention [^6] 通过去掉 Softmax，将注意力重写为 RNN 形式"
+   - State facts directly without subjective emphasis
 
-6. **Multi-language sections**: Create `_index.md` for each language section:
+6. **External links**: Verify links are accessible before adding
+
+7. **Multi-language sections**: Create `_index.md` for each language section:
    - `content/en/_index.md`
    - `content/en/posts/_index.md`
    
