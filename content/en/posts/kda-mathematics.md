@@ -263,8 +263,8 @@ This article focuses on **KDA** as the main subject, establishing its mathematic
 $$\sum_{i=1}^C \mathbf{k}_i \otimes \mathbf{v}_i = \mathbf{K}^\top \mathbf{V}$$
 
 where:
-- $\mathbf{K} \in \mathbb{R}^{C \times K}$ is the matrix with $\mathbf{k}_i^\top$ as row $i$
-- $\mathbf{V} \in \mathbb{R}^{C \times V}$ is the matrix with $\mathbf{v}_i^\top$ as row $i$
+- $\mathbf{K} \in \mathbb{R}^{C \times K}$ is the matrix formed by $C$ vectors $\mathbf{k}_i$
+- $\mathbf{V} \in \mathbb{R}^{C \times V}$ is the matrix formed by $C$ vectors $\mathbf{v}_i$
 - $\otimes$ denotes outer product: $(\mathbf{k} \otimes \mathbf{v})_{ab} = k_a \cdot v_b$
 
 **Proof**: Directly compute element $(a, b)$ of the right-hand side matrix:

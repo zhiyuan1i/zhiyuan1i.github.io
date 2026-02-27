@@ -266,8 +266,8 @@ $$\mathbf{s}_t = \boldsymbol{\lambda}_t \odot \mathbf{s}_{t-1} + \beta_t \cdot \
 $$\sum_{i=1}^C \mathbf{k}_i \otimes \mathbf{v}_i = \mathbf{K}^\top \mathbf{V}$$
 
 其中：
-- $\mathbf{K} \in \mathbb{R}^{C \times K}$ 是以 $\mathbf{k}_i^\top$ 为第 $i$ 行的矩阵
-- $\mathbf{V} \in \mathbb{R}^{C \times V}$ 是以 $\mathbf{v}_i^\top$ 为第 $i$ 行的矩阵
+- $\mathbf{K} \in \mathbb{R}^{C \times K}$ 是 $C$ 个 $\mathbf{k}_i$ 拼起来的矩阵
+- $\mathbf{V} \in \mathbb{R}^{C \times V}$ 是 $C$ 个 $\mathbf{v}_i$ 拼起来的矩阵
 - $\otimes$ 表示外积：$(\mathbf{k} \otimes \mathbf{v})_{ab} = k_a \cdot v_b$
 
 **证明**：直接计算右边矩阵的 $(a, b)$ 元素：
