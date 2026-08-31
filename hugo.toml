@@ -169,8 +169,11 @@ url = 'https://github.com/zhiyuan1i'
 name = 'zhihu'
 url = 'https://www.zhihu.com/people/f6hoks'
 [[languages.zh.params.socialIcons]]
+name = 'x'
+url = 'https://x.com/uniartisan'
+[[languages.zh.params.socialIcons]]
 name = 'email'
-url = 'mailto:lizhiyuan@moonshot.cn'
+url = 'mailto:uniartisan2017@gmail.com'
 [[languages.zh.params.socialIcons]]
 name = 'rss'
 url = 'index.xml'
@@ -186,8 +189,11 @@ url = 'tags'
 name = 'github'
 url = 'https://github.com/zhiyuan1i'
 [[languages.en.params.socialIcons]]
+name = 'x'
+url = 'https://x.com/uniartisan'
+[[languages.en.params.socialIcons]]
 name = 'email'
-url = 'mailto:lizhiyuan@moonshot.cn'
+url = 'mailto:uniartisan2017@gmail.com'
 [[languages.en.params.socialIcons]]
 name = 'rss'
 url = 'index.xml'

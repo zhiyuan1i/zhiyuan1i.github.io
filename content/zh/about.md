@@ -7,8 +7,6 @@ hidemeta: true
 
 ## Zhiyuan Li
 
-AI Infra 工程师，目前就职于 [Moonshot AI](https://www.moonshot.cn/)。
-
 工作以来一直专注于 **Linear Attention** 方向的高效实现与优化，很荣幸能参与到 [Kimi Linear](https://github.com/MoonshotAI/Kimi-Linear) 和 **Kimi Delta Attention (KDA)** 的开发工作中，向团队里的优秀同事们学习了很多。
 
 ---
@@ -36,4 +34,5 @@ AI Infra 工程师，目前就职于 [Moonshot AI](https://www.moonshot.cn/)。
 **联系方式：**
 - GitHub: [@zhiyuan1i](https://github.com/zhiyuan1i)
 - 知乎: [@lizhiyuan](https://www.zhihu.com/people/f6hoks)
-- Email: lizhiyuan@moonshot.cn
+- X: [@uniartisan](https://x.com/uniartisan)
+- Email: uniartisan2017@gmail.com
