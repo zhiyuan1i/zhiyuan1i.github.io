@@ -171,6 +171,8 @@ class BlogServer {
         'Referrer-Policy',
         'strict-origin-when-cross-origin',
       );
+      response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+      response.headers.set('Cross-Origin-Embedder-Policy', 'credentialless');
       if (devMode) response.headers.set('Cache-Control', 'no-store');
       final path = request.uri.path;
       if (path == '/robots.txt') {
@@ -228,7 +230,7 @@ class BlogServer {
       if (!await index.exists()) {
         await _sendText(
           request,
-          'Flutter web build not found. Run: flutter build web --release --pwa-strategy=none\n',
+          'Flutter web build not found. Run: flutter build web --release --wasm --pwa-strategy=none\n',
           statusCode: HttpStatus.serviceUnavailable,
         );
         return;

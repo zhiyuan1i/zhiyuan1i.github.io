@@ -124,7 +124,13 @@ void main() {
   final errors = <String>[];
 
   setUpAll(() async {
-    _server = BlogServer(root: Directory.current, host: '127.0.0.1', port: 0);
+    final buildPath = Platform.environment['BLOG_BUILD_DIR'];
+    _server = BlogServer(
+      root: Directory.current,
+      buildDirectory: buildPath == null ? null : Directory(buildPath),
+      host: '127.0.0.1',
+      port: 0,
+    );
     await _server.start();
     content = await ContentRepository.load(Directory.current);
     browser = await puppeteer.launch(

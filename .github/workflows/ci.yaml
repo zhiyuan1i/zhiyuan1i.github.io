@@ -21,8 +21,8 @@ jobs:
         run: flutter pub get
       - name: Run static analysis
         run: flutter analyze
-      - name: Build Flutter Web without a service worker
-        run: flutter build web --release --pwa-strategy=none
+      - name: Build Flutter Web with Wasm and JavaScript fallback
+        run: flutter build web --release --wasm --pwa-strategy=none
       - name: Run tests that do not need a browser
         env:
           SKIP_BROWSER_TESTS: 'true'

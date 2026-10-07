@@ -48,7 +48,7 @@ Future<void> buildStaticSite({
   final index = File('${output.path}/index.html');
   if (!await index.exists()) {
     throw StateError(
-      'Flutter Web build not found. Run: flutter build web --release --pwa-strategy=none',
+      'Flutter Web build not found. Run: flutter build web --release --wasm --pwa-strategy=none',
     );
   }
   final template = await index.readAsString();

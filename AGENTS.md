@@ -16,11 +16,11 @@ Install Flutter 3.47.6 or a compatible newer stable release, then run:
 
 ```bash
 flutter pub get
-flutter build web --release --pwa-strategy=none
+flutter build web --release --wasm --pwa-strategy=none
 dart run server/blog_server.dart --dev --port 1320 --base-url http://127.0.0.1:1320/
 ```
 
-Open http://localhost:1320. The preview serves both Flutter and Markdown content negotiation.
+Open http://localhost:1320. The preview serves both Flutter and Markdown content negotiation. Builds keep Flutter's official JavaScript fallback alongside Wasm. The Dart server sends COOP/COEP headers for multi-threaded skwasm; static Pages uses single-threaded skwasm where supported and JavaScript otherwise.
 
 For UI-only hot reload on macOS with Microsoft Edge:
 
@@ -103,7 +103,7 @@ The blog is intentionally small; avoid framework-like abstractions and duplicate
 
 ```bash
 flutter analyze
-flutter build web --release --pwa-strategy=none
+flutter build web --release --wasm --pwa-strategy=none
 flutter test
 ```
 

@@ -95,6 +95,11 @@ description: '带有：冒号的描述'
     );
     expect(response.status, 200);
     expect(response.contentType, startsWith('text/html'));
+    expect(response.headers.value('cross-origin-opener-policy'), 'same-origin');
+    expect(
+      response.headers.value('cross-origin-embedder-policy'),
+      'credentialless',
+    );
     expect(
       response.headers.value('vary'),
       'Accept, User-Agent, Accept-Language',

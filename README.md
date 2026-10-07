@@ -17,9 +17,11 @@
 
 ```bash
 flutter pub get
-flutter build web --release --pwa-strategy=none
+flutter build web --release --wasm --pwa-strategy=none
 dart run server/blog_server.dart --dev --port 1320 --base-url http://127.0.0.1:1320/
 ```
+
+构建同时包含 Wasm 与 JavaScript 回退。Dart 服务会发送多线程 skwasm 所需的 COOP/COEP 响应头；GitHub Pages 上 skwasm 以单线程模式运行，不支持 WasmGC 的浏览器则使用 JavaScript 回退。
 
 访问 **http://localhost:1320**。
 
@@ -56,7 +58,7 @@ description: '文章描述'
 
 ```bash
 flutter analyze
-flutter build web --release --pwa-strategy=none
+flutter build web --release --wasm --pwa-strategy=none
 flutter test
 ```
 
@@ -66,7 +68,7 @@ flutter test
 
 ### Dart 内容服务
 
-先执行 `flutter build web --release --pwa-strategy=none`，再由 Dart 内容服务同时提供 `build/web` 和 `content/`：
+先执行 `flutter build web --release --wasm --pwa-strategy=none`，再由 Dart 内容服务同时提供 `build/web` 和 `content/`：
 
 ```bash
 dart run server/blog_server.dart --host 0.0.0.0 --port 8080 --base-url https://zhiyuan1i.github.io/
