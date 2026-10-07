@@ -70,7 +70,7 @@ $$\mathbf{S}_t = (\mathbf{D}_t + \mathbf{b}_t \mathbf{a}_t^T) \mathbf{S}_{t-1} +
 其中：
 - $\mathbf{D}_t = \text{diag}(\exp(\mathbf{g}_t)) \in \mathbb{R}^{K \times K}$ 是对角衰减矩阵
 - $\mathbf{a}_t, \mathbf{b}_t \in \mathbb{R}^{K \times 1}$（列向量）是低秩更新的两个向量
-- 转移矩阵 $\mathbf{P}_t = \mathbf{D}_t + \mathbf{b}_t \mathbf{a}_t^T$ 是**对角+低秩（DPLR）**结构
+- 转移矩阵 $\mathbf{P}_t = \mathbf{D}_t + \mathbf{b}_t \mathbf{a}_t^T$ 是**对角+低秩（DPLR）结构**
 
 ### 为什么叫 "Diagonal Plus Low Rank"？
 

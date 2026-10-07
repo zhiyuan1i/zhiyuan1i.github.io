@@ -4,231 +4,130 @@ This file documents the development workflow and conventions for AI assistants w
 
 ## Project Overview
 
-- **Framework**: Hugo with PaperMod theme
-- **Languages**: Chinese (primary), English (secondary)
-- **Hosting**: GitHub Pages with GitHub Actions auto-deployment
-- **URL**: https://zhiyuan1i.github.io
+- **UI**: Flutter Web with a custom, restrained liquid-glass material
+- **Content**: Markdown files shared by the Flutter UI, Dart content server, and static Pages generator
+- **SEO**: The Dart host negotiates Markdown at the same URL; Pages uses per-route `index.md` files
+- **Languages**: Chinese and English, with browser-language detection and a manual switch
+- **CI**: Flutter analysis, release build, non-browser tests, static site generation, and Pages deployment
 
-## Development Workflow
+## Local Development
 
-### 1. Local Development
-
-```bash
-# Start development server
-hugo server -D
-
-# Access at http://localhost:1313
-```
-
-### 2. Content Creation
-
-#### Creating a new post (Chinese)
+Install Flutter 3.47.6 or a compatible newer stable release, then run:
 
 ```bash
-hugo new content posts/my-post.md
+flutter pub get
+flutter build web --release --pwa-strategy=none
+dart run server/blog_server.dart --dev --port 1320 --base-url http://127.0.0.1:1320/
 ```
 
-Frontmatter template:
+Open http://localhost:1320. The preview serves both Flutter and Markdown content negotiation.
+
+For UI-only hot reload on macOS with Microsoft Edge:
+
+```bash
+export CHROME_EXECUTABLE="/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge"
+flutter run -d chrome --web-hostname 127.0.0.1 --web-port 1320
+```
+
+Set `CHROME_EXECUTABLE` only in the current shell. Never commit local browser paths, proxy addresses, credentials, or other machine-specific settings to the repository. If a proxy is needed for a download, configure it only for that command or shell session.
+
+## Content Creation
+
+Create Chinese content at `content/zh/posts/my-post.md` and the English translation at `content/en/posts/my-post.md`. Use the same slug and `translationKey` in both files.
+
 ```yaml
 ---
 title: '文章标题'
 date: '2026-02-16T00:00:00Z'
 draft: false
+translationKey: my-post
 tags: ['标签1', '标签2']
 categories: ['分类']
 description: '文章描述'
 ---
 ```
 
-#### Creating English version
+The Flutter asset manifest discovers new posts automatically; no Hugo generator or `_index.md` is required. Keep titles, dates, descriptions, tags, and translations in sync. English routes use the `/en/` prefix.
 
-After Chinese content is finalized, create English version at:
-```
-content/en/posts/my-post.en.md
-```
+Chinese browser preferences (`zh-*`) default to `/`; every other language defaults to `/en/`. Explicit deep links and the manual language switch take precedence.
 
-With frontmatter:
-```yaml
----
-title: 'English Title'
-date: '2026-02-16T00:00:00Z'
-draft: false
-tags: ['tag1', 'tag2']
-categories: ['category']
-description: 'Article description'
----
-```
+## Markdown and Math
 
-### 3. Math Equation Support
+Inline math uses `$...$` or `\(...\)`; block math uses `$$...$$`. Add `math: true` for articles containing equations.
 
-This blog supports LaTeX math rendering using KaTeX.
-
-#### Configuration Files
-
-- `hugo.toml` - Goldmark passthrough extension configuration
-- `layouts/partials/math.html` - KaTeX CSS and JS loading
-- `layouts/partials/extend_head.html` - Conditional math loading
-
-#### How to Enable Math in Posts
-
-Add `math: true` to the frontmatter:
-
-```yaml
----
-title: 'My Post'
-date: '2026-02-17T00:00:00Z'
-math: true  # Enable math rendering
-tags: ['math']
----
-```
-
-#### Supported Syntax
-
-**Inline math** (use `\(` `\)` or `$` `$`):
 ```markdown
-The complexity is $O(n^2)$ or \(O(n^2)\).
-```
+The complexity is $O(n^2)$.
 
-**Block math** (use `$$`):
-```markdown
-$$
-\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
-$$
-```
-
-**Multi-line aligned equations**:
-```markdown
 $$
 \begin{aligned}
 S_i &= S_{i-1} + \phi(K_i)^T V_i \\
-Z_i &= Z_{i-1} + \phi(K_i)^T \\
-O_i &= \frac{\phi(Q_i) S_i}{\phi(Q_i) Z_i}
+Z_i &= Z_{i-1} + \phi(K_i)^T
 \end{aligned}
 $$
 ```
 
-**Matrices**:
-```markdown
-$$
-\mathbf{O} = \begin{bmatrix} 
-o_{11} & o_{12} & \cdots & o_{1d} \\
-o_{21} & o_{22} & \cdots & o_{2d} \\
-\vdots & \vdots & \ddots & \vdots \\
-o_{n1} & o_{n2} & \cdots & o_{nd}
-\end{bmatrix}
-$$
-```
+Avoid empty lines inside `$$` blocks and split unnecessarily complex nested formulas. Rendering is provided by `flutter_markdown_plus`, `flutter_markdown_plus_latex`, and `flutter_math_fork`; there is no KaTeX configuration anymore.
 
-#### Important Notes
+## SEO and RSS
 
-1. **Avoid empty lines inside `$$` blocks** - This can cause passthrough parsing issues
-2. **Avoid very complex nested multi-line formulas** - May not render correctly; simplify to single-line or split into multiple equations
-3. **Demo post**: See `content/zh/posts/math-demo.md` for examples
+`server/blog_server.dart` serves the release build from `build/web` and content from `content/`.
 
-### 4. Translation Guidelines
+- Browser requests with `Accept: text/html` receive the Flutter shell.
+- `curl`, crawlers, `.md` URLs, `?format=markdown`, and `Accept: text/markdown` receive Markdown.
+- Static Flutter assets bypass content negotiation.
+- RSS: `/index.xml` and `/en/index.xml`.
+- SEO files: `/robots.txt` and `/sitemap.xml`.
 
-When translating from Chinese to English:
-
-1. **Keep technical terms consistent**:
-   - Linear Attention → Linear Attention
-   - Kimi Delta Attention → Kimi Delta Attention (KDA)
-   - 分布式训练 → Distributed Training
-   - 推理优化 → Inference Optimization
-
-2. **Maintain tone**: Professional yet humble, consistent with author's style
-
-3. **URL structure**: English content has `/en/` prefix automatically
-
-### 5. Git Workflow
+Examples:
 
 ```bash
-# Check status
-git status
-
-# Add new files
-git add content/posts/my-post.md
-
-# Commit
-git commit -m "feat: add post about xxx"
-
-# Push (triggers auto-deployment)
-git push origin main
+curl http://127.0.0.1:1320/posts/
+curl -H 'Accept: text/markdown' http://127.0.0.1:1320/posts/kda-mathematics/
+curl -H 'Accept: text/html' http://127.0.0.1:1320/posts/kda-mathematics/
 ```
 
-### 6. File Organization
+Same-URL content negotiation requires the Dart content server in production. For GitHub Pages, `server/static_site.dart` writes every route as `index.html` plus `index.md`, along with 404, RSS, Sitemap, robots, and `.nojekyll`. CI runs this generator after the non-browser test suite and deploys `main` to Pages. Static Pages cannot negotiate Markdown based on `Accept`.
 
-```
-content/
-├── zh/                   # Chinese content
-│   ├── about.md
-│   ├── archives.md
-│   └── posts/
-│       └── my-post.md
-└── en/                   # English content
-    ├── about.md
-    ├── archives.md
-    └── posts/
-        └── my-post.md
-```
+## Design and Performance
 
-### 7. Key Configuration
+The blog is intentionally small; avoid framework-like abstractions and duplicate component systems.
 
-Multi-language setup in `hugo.toml`:
-- `defaultContentLanguage = 'zh'` - Chinese is default
-- `contentDir = 'content/zh'` for Chinese
-- `contentDir = 'content/en'` for English
-- English content accessed via `/en/` prefix
-- Language switcher available in UI
+- `GlassSurface` defaults to the lightweight frosted material.
+- Set `refractive: true` only for the floating navigation. Keep articles, cards, archives, and dense tag lists on the lightweight path.
+- `LiquidGlassView` starts in snapshot mode. `ScrollStartNotification` enables same-frame live capture; `ScrollEndNotification` stops it and captures the final aligned frame. Do not enable perpetual capture or high-DPI full-screen capture without measuring the GPU cost.
+- Keep optical borders and shadows to one layer per surface; do not stack translucent wrappers to imitate refraction.
+- Preserve semantic labels and keyboard interaction for every custom control.
+- Use the avatar in `static/images/profile.png` for navigation branding and generated web icons.
 
-**Multi-language menu configuration** (use `menus` not `menu`):
-```toml
-[[languages.zh.menus.main]]
-identifier = 'home'
-name = '主页'
-url = '/'
-weight = 10
+## Tests
 
-[[languages.en.menus.main]]
-identifier = 'home'
-name = 'Home'
-url = '/en/'
-weight = 10
+```bash
+flutter analyze
+flutter build web --release --pwa-strategy=none
+flutter test
 ```
 
-**Note**: Must use `[[languages.zh.menus.main]]` not `[[languages.zh.menu.main]]`!
+The test suite includes Flutter widgets, the content server, static Pages generation, and real browsers driven through Dart CDP (`puppeteer`). It covers language detection, same-origin navigation, mobile layouts, Markdown negotiation, RSS, math articles, and browser errors. No Node.js or JavaScript test runner is used. CI sets `SKIP_BROWSER_TESTS=true` because hosted runners do not provide a reliable browser; local `flutter test` still runs the complete Edge suite by default.
 
-### 8. Notes for AI Assistants
+Before finishing visual work, inspect real browser screenshots for desktop, mobile, dark mode, hover states, and long mathematical articles. Compilation alone is not visual verification.
 
-1. **Always use proxy** when downloading external resources:
-   ```bash
-   export https_proxy=http://proxy.msh.work:3128
-   ```
+## File Organization
 
-2. **Image optimization**: Use ImageMagick to resize large images:
-   ```bash
-   convert image.jpg -resize 240x240 -quality 85 image.png
-   ```
+```
+lib/                 Flutter application, screens, models, and widgets
+server/              Pure Dart static and Markdown content server
+content/zh/          Chinese Markdown content
+content/en/          English Markdown content
+static/images/       Avatar and other image assets
+static/icons/        Social SVG icons
+web/                 Flutter Web bootstrap, manifest, and icons
+test/                Flutter, server, and Dart CDP browser tests
+```
 
-3. **Check build** before committing:
-   ```bash
-   hugo --gc --minify
-   ```
+## Writing Style
 
-4. **Modest tone**: When referencing author's work (KDA, etc.), use "participated in" rather than "core developer"
-
-5. **Technical writing style**:
-   - Use plain, factual language. Avoid buzzwords like "核心洞察" (core insight), "本质" (essence), "革命性" (revolutionary)
-   - Example: "Linear Attention [^6] 通过去掉 Softmax，将注意力重写为 RNN 形式"
-   - State facts directly without subjective emphasis
-
-6. **External links**: Verify links are accessible before adding
-
-7. **Multi-language sections**: Create `_index.md` for each language section:
-   - `content/en/_index.md`
-   - `content/en/posts/_index.md`
-   
-   Otherwise will get 404 errors.
+Use plain, factual language. Avoid subjective buzzwords such as “核心洞察”, “本质”, and “革命性”. When referencing the author's work, use “参与了” / “contributed to”, not “core developer”. Verify external links before adding them.
 
 ## Powered by
 
-*Development assisted by [Kimi K2.5](https://www.moonshot.cn/)*
+*Development assisted by [Kimi K3](https://www.moonshot.cn/)*

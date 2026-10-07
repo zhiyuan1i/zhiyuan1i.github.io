@@ -1,0 +1,67 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.6
+          channel: stable
+          cache: false
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Run static analysis
+        run: flutter analyze
+      - name: Build Flutter Web without a service worker
+        run: flutter build web --release --pwa-strategy=none
+      - name: Run tests that do not need a browser
+        env:
+          SKIP_BROWSER_TESTS: 'true'
+        run: flutter test
+      - name: Generate static Pages routes and Markdown
+        run: dart run server/static_site.dart --base-url https://zhiyuan1i.github.io/
+      - name: Upload Flutter Web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-web
+          path: build/web
+          retention-days: 7
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download Flutter Web artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: flutter-web
+          path: build/web
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
