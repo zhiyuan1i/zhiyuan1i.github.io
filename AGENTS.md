@@ -6,7 +6,7 @@ This file documents the development workflow and conventions for AI assistants w
 
 - **UI**: Flutter Web with a custom, restrained liquid-glass material
 - **Content**: Markdown files shared by the Flutter UI, Dart content server, and static Pages generator
-- **SEO**: The Dart host negotiates Markdown at the same URL; Pages uses per-route `index.md` files
+- **SEO**: The Dart host negotiates Markdown at the same URL; Pages uses per-route `index.html` files with route metadata and static content, plus `index.md` files
 - **Languages**: Chinese and English, with browser-language detection and a manual switch
 - **CI**: Flutter analysis, release build, non-browser tests, static site generation, and Pages deployment
 
@@ -86,7 +86,7 @@ curl -H 'Accept: text/markdown' http://127.0.0.1:1320/posts/kda-mathematics/
 curl -H 'Accept: text/html' http://127.0.0.1:1320/posts/kda-mathematics/
 ```
 
-Same-URL content negotiation requires the Dart content server in production. For GitHub Pages, `server/static_site.dart` writes every route as `index.html` plus `index.md`, along with 404, RSS, Sitemap, robots, and `.nojekyll`. CI runs this generator after the non-browser test suite and deploys `main` to Pages. Static Pages cannot negotiate Markdown based on `Accept`.
+Same-URL content negotiation requires the Dart content server in production. For GitHub Pages, `server/static_site.dart` writes every route as `index.html` plus `index.md`, along with 404, RSS, Sitemap, robots, and `.nojekyll`. Each route's HTML includes its own title, description, Canonical, Open Graph metadata, available `hreflang` translations, and a static readable body; the Flutter bootstrap starts before that body is parsed and the body is removed during startup. CI runs this generator after the non-browser test suite and deploys `main` to Pages. Static Pages cannot negotiate Markdown based on `Accept`.
 
 ## Design and Performance
 

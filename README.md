@@ -1,6 +1,6 @@
 # Zhiyuan Li's Blog
 
-个人博客，使用 Flutter Web 构建。文章保留 Markdown 源文件，同一 URL 在浏览器中展示 Flutter 页面，在抓取或直接 HTTP 请求时返回 Markdown。
+个人博客，使用 Flutter Web 构建。文章保留 Markdown 源文件；动态 Dart 服务支持同 URL 内容协商，GitHub Pages 生成带路由级 SEO 和静态正文的 HTML 及独立 Markdown。
 
 ## 特性
 
@@ -9,6 +9,7 @@
 - 中文浏览器默认中文，其他语言默认英文；支持手动切换和双语深链
 - Markdown 文章、LaTeX 数学公式、标签与归档
 - 同 URL Markdown 内容协商、Sitemap 与双语 RSS
+- Pages 路由级 SEO 元数据与无需 JavaScript 即可阅读的静态 HTML 正文
 - Flutter 单元测试和 Edge/Chromium 端到端测试
 
 ## 本地预览

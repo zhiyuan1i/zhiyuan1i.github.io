@@ -82,6 +82,7 @@ description: '带有：冒号的描述'
       expect(parsed.metadata['draft'], isTrue);
       expect(parsed.metadata['tags'], ['TagA', 'TagB']);
       expect(parsed.metadata['description'], '带有：冒号的描述');
+      expect(parsed.body, '正文\n');
     },
   );
 

@@ -762,6 +762,7 @@ class ParsedSource {
     final normalized = source.replaceAll('\r\n', '\n');
     final match = RegExp(r'^---\n([\s\S]*?)\n---\n?').firstMatch(normalized);
     metadata = <String, Object?>{};
+    body = match == null ? normalized : normalized.substring(match.end);
     if (match == null) return;
     final loaded = loadYaml(match.group(1)!);
     if (loaded is! YamlMap) return;
@@ -771,6 +772,7 @@ class ParsedSource {
   }
 
   late final Map<String, Object?> metadata;
+  late final String body;
 
   static Object? _yamlValue(Object? value) {
     if (value is YamlMap) {
