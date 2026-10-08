@@ -1,6 +1,6 @@
 # Zhiyuan Li's Blog
 
-个人技术博客，使用 Flutter Web 构建。文章保留 Markdown 源文件，同一 URL 在浏览器中展示 Flutter 页面，在抓取或直接 HTTP 请求时返回 Markdown。
+个人博客，使用 Flutter Web 构建。文章保留 Markdown 源文件，同一 URL 在浏览器中展示 Flutter 页面，在抓取或直接 HTTP 请求时返回 Markdown。
 
 ## 特性
 

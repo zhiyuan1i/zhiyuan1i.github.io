@@ -169,8 +169,7 @@ class _BlogRouterAppState extends State<BlogRouterApp> {
           context: context,
           state: state,
           language: language,
-          title:
-              'Zhiyuan Li · ${language == 'en' ? 'AI Infra Engineer' : 'AI Infra 工程师'}',
+          title: 'Zhiyuan Li · ${language == 'en' ? 'Blog' : '个人博客'}',
           child: HomeScreen(content: widget.content, language: language),
         ),
       ),

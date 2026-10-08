@@ -29,7 +29,7 @@ Focusing on efficient implementation and optimization of **Linear Attention**. H
 
 ### 💬 About This Site
 
-This site documents my learning notes, technical articles, and some immature thoughts in the AI Infra field. I'm still learning, so please feel free to point out any mistakes. Looking forward to exchanging ideas with you.
+This site records my technical learning and projects, as well as life, reading, and occasional thoughts. AI infrastructure is one part of it. Feel free to point out any mistakes and share your thoughts.
 
 **Contact:**
 - GitHub: [@zhiyuan1i](https://github.com/zhiyuan1i)

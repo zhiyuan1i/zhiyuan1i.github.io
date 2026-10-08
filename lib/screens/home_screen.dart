@@ -146,7 +146,7 @@ class _ProfileHero extends StatelessWidget {
             ),
           ),
           child: Text(
-            'AI INFRA  ·  LINEAR ATTENTION',
+            language == 'en' ? 'TECH  ·  LIFE  ·  NOTES' : '技术  ·  生活  ·  随想',
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -171,8 +171,8 @@ class _ProfileHero extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 650),
           child: Text(
             language == 'en'
-                ? 'AI infrastructure engineer focused on efficient Linear Attention and inference systems. I contributed to Kimi Linear and Kimi Delta Attention.'
-                : '专注于 Linear Attention 的高效实现与推理优化，参与了 Kimi Linear 与 Kimi Delta Attention 的开发。这里记录我的技术学习与实践。',
+                ? 'AI infrastructure engineer focused on efficient Linear Attention and inference systems. I contributed to Kimi Linear and Kimi Delta Attention. I write about technology, life, reading, and occasional thoughts.'
+                : '专注于 Linear Attention 的高效实现与推理优化，参与了 Kimi Linear 与 Kimi Delta Attention 的开发。这里记录技术、生活、阅读与随想。',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,

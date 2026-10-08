@@ -494,10 +494,10 @@ String renderRss(
             '    </item>';
       })
       .join('\n');
-  final title = language == 'en' ? 'Zhiyuan Li' : 'Zhiyuan Li 的技术博客';
+  final title = language == 'en' ? 'Zhiyuan Li' : 'Zhiyuan Li 的个人博客';
   final description = language == 'en'
-      ? 'Notes on Linear Attention, AI infrastructure, and efficient inference.'
-      : 'Linear Attention、AI Infra 与高效推理技术笔记。';
+      ? 'A personal blog about technology, life, reading, and occasional thoughts.'
+      : 'Zhiyuan Li 的个人博客，记录技术、生活、阅读与随想。';
   return '<?xml version="1.0" encoding="UTF-8"?>\n'
       '<rss version="2.0">\n  <channel>\n'
       '    <title>$title</title>\n'
@@ -652,8 +652,8 @@ class ContentRepository {
     final prefix = english ? '/en' : '';
     final title = postsOnly ? (english ? 'Posts' : '文章') : 'Zhiyuan Li';
     final description = english
-        ? 'Notes on Linear Attention, AI infrastructure, and efficient inference.'
-        : 'Linear Attention、AI Infra 与高效推理技术笔记。';
+        ? 'A personal blog about technology, life, reading, and occasional thoughts.'
+        : 'Zhiyuan Li 的个人博客，记录技术、生活、阅读与随想。';
     final buffer = StringBuffer()
       ..writeln('---')
       ..writeln('title: "$title"')
