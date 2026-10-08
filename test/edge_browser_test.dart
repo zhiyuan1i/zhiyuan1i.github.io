@@ -96,20 +96,60 @@ void _watch(Page page, List<String> errors) {
 }
 
 Future<String> _executablePath() async {
-  final configured =
-      Platform.environment['CHROME_EXECUTABLE'] ??
-      Platform.environment['PUPPETEER_EXECUTABLE_PATH'];
-  if (configured != null && configured.isNotEmpty) return configured;
-  const edge = '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge';
-  if (File(edge).existsSync()) return edge;
-  for (final candidate in const [
+  for (final variable in const [
+    'CHROME_EXECUTABLE',
+    'PUPPETEER_EXECUTABLE_PATH',
+  ]) {
+    final configured = Platform.environment[variable];
+    if (configured != null && configured.isNotEmpty) return configured;
+  }
+
+  final edgePaths = <String>[
+    if (Platform.isMacOS) ...[
+      '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+      if (Platform.environment['HOME'] case final home?)
+        '$home/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+    ],
+    if (Platform.isWindows)
+      for (final root in [
+        Platform.environment['PROGRAMFILES(X86)'],
+        Platform.environment['PROGRAMFILES'],
+        Platform.environment['LOCALAPPDATA'],
+      ])
+        if (root != null && root.isNotEmpty)
+          '$root\\Microsoft\\Edge\\Application\\msedge.exe',
+    if (Platform.isLinux) ...[
+      '/usr/bin/microsoft-edge',
+      '/usr/bin/microsoft-edge-stable',
+      '/usr/local/bin/microsoft-edge',
+      '/opt/microsoft/msedge/msedge',
+    ],
+  ];
+  for (final path in edgePaths) {
+    if (File(path).existsSync()) return path;
+  }
+
+  final lookup = Platform.isWindows ? 'where' : 'which';
+  for (final candidate in [
+    if (Platform.isWindows) 'msedge',
+    'microsoft-edge',
+    if (Platform.isLinux) 'microsoft-edge-stable',
     'chromium',
     'google-chrome',
-    'microsoft-edge',
     'chrome',
   ]) {
-    final result = await Process.run('which', [candidate]);
-    if (result.exitCode == 0) return result.stdout.toString().trim();
+    try {
+      final result = await Process.run(lookup, [candidate]);
+      if (result.exitCode != 0) continue;
+      final paths = result.stdout
+          .toString()
+          .split(RegExp(r'\r?\n'))
+          .map((path) => path.trim())
+          .where((path) => path.isNotEmpty);
+      if (paths.isNotEmpty) return paths.first;
+    } on ProcessException {
+      continue;
+    }
   }
   return (await downloadChrome()).executablePath;
 }
