@@ -39,6 +39,7 @@ class BlogShell extends StatefulWidget {
 
 class _BlogShellState extends State<BlogShell> {
   late final LiquidGlassViewController _glassController;
+  Animation<double>? _routeAnimation;
   bool _liveCapture = false;
   Size? _lastSize;
   bool? _lastDark;
@@ -53,8 +54,29 @@ class _BlogShellState extends State<BlogShell> {
   void didUpdateWidget(BlogShell oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.currentPath != widget.currentPath) {
-      _captureAfterFrame();
+      _captureAfterRouteTransition();
     }
+  }
+
+  void _captureAfterRouteTransition() {
+    final animation = ModalRoute.of(context)?.animation;
+    if (animation == null || animation.isCompleted) {
+      _captureAfterFrame();
+      return;
+    }
+    _routeAnimation?.removeStatusListener(_onRouteAnimationStatus);
+    _routeAnimation = animation;
+    animation.addStatusListener(_onRouteAnimationStatus);
+  }
+
+  void _onRouteAnimationStatus(AnimationStatus status) {
+    if (status != AnimationStatus.completed &&
+        status != AnimationStatus.dismissed) {
+      return;
+    }
+    _routeAnimation?.removeStatusListener(_onRouteAnimationStatus);
+    _routeAnimation = null;
+    _captureAfterFrame();
   }
 
   void _captureAfterFrame() {
@@ -85,6 +107,12 @@ class _BlogShellState extends State<BlogShell> {
       if (!mounted || _liveCapture != value) return;
       apply();
     });
+  }
+
+  @override
+  void dispose() {
+    _routeAnimation?.removeStatusListener(_onRouteAnimationStatus);
+    super.dispose();
   }
 
   @override

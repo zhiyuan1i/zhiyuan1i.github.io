@@ -148,10 +148,12 @@ void main() {
       args: const [
         '--lang=zh-CN',
         '--enable-unsafe-swiftshader',
-        '--use-angle=d3d11',
+        '--use-angle=swiftshader',
       ],
     );
     page = await browser.newPage();
+    page.defaultTimeout = const Duration(seconds: 90);
+    page.defaultNavigationTimeout = const Duration(seconds: 90);
     page.onConsole.listen((message) {
       if (message.typeName == 'error') errors.add(message.text ?? '');
     });

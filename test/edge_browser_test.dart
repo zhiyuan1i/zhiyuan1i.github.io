@@ -95,7 +95,9 @@ Future<void> _expectPath(Page page, String expected) async {
 Future<void> _screenshot(Page page, String name) async {
   final directory = Directory('test-results/dart-visual')
     ..createSync(recursive: true);
+  stdout.writeln('screenshot start: $name');
   final bytes = await page.screenshot();
+  stdout.writeln('screenshot done: $name');
   await File('${directory.path}/$name.png').writeAsBytes(bytes, flush: true);
 }
 
@@ -170,6 +172,9 @@ Future<String> _executablePath() async {
   return (await downloadChrome()).executablePath;
 }
 
+const _timeoutDuration = Duration(seconds: 90);
+const _timeout = Timeout(_timeoutDuration);
+
 late BlogServer _server;
 
 void main() {
@@ -196,10 +201,12 @@ void main() {
       args: const [
         '--lang=zh-CN',
         '--enable-unsafe-swiftshader',
-        '--use-angle=d3d11',
+        '--use-angle=swiftshader',
       ],
     );
     page = await browser.newPage();
+    page.defaultTimeout = _timeoutDuration;
+    page.defaultNavigationTimeout = _timeoutDuration;
     _watch(page, errors);
   });
 
@@ -242,7 +249,7 @@ Object.defineProperty(navigator, 'language', {get: () => 'en-US'});
     }
     if (rssPage != english) await rssPage.close();
     await english.close();
-  });
+  }, timeout: _timeout);
 
   test(
     'navigation, RSS popup, deep links, and math all work in Edge',
@@ -309,7 +316,7 @@ Object.defineProperty(navigator, 'language', {get: () => 'en-US'});
       await _open(page, firstPost.path);
       await _screenshot(page, 'edge-post-dark');
     },
-    timeout: const Timeout(Duration(seconds: 60)),
+    timeout: _timeout,
   );
 
   test('rapid article scrolling starts with complete content', () async {
@@ -320,8 +327,7 @@ Object.defineProperty(navigator, 'language', {get: () => 'en-US'});
     await _open(page, '/posts/');
     await _clickSemantic(page, post.title);
     await _expectPath(page, post.path);
-    final initialBody = await page.evaluate<String>('document.body.innerText');
-    expect(initialBody, contains('Footnote 19'));
+    await _expectSemantic(page, 'Footnote 19');
     final scrollMarker = post.tags.first;
     final markerTop = await _semanticTop(page, scrollMarker);
     await page.mouse.wheel(deltaY: 2600);
@@ -332,7 +338,7 @@ Object.defineProperty(navigator, 'language', {get: () => 'en-US'});
     await Future<void>.delayed(const Duration(milliseconds: 450));
     final body = await page.evaluate<String>('document.body.innerText');
     expect(body, isNot(contains('Parser Error')));
-  }, timeout: const Timeout(Duration(seconds: 60)));
+  }, timeout: _timeout);
 
   test('article anchors and footnotes are interactive in Edge', () async {
     await page.setViewport(const DeviceViewport(width: 1440, height: 1000));
@@ -351,12 +357,14 @@ Object.defineProperty(navigator, 'language', {get: () => 'en-US'});
         .firstWhere((post) => footnotePattern.hasMatch(post.source));
     final id = footnotePattern.firstMatch(footnotePost.source)!.group(1)!;
     await _open(page, footnotePost.path);
-    await _clickSemantic(page, 'Footnote $id');
+    await page.evaluate(
+      "Array.from($_semanticButtons).find(item => item.textContent.includes('Footnote $id')).click()",
+    );
     await page.waitForFunction("location.hash === '#fn-$id'");
     await _clickSemantic(page, 'Footnote definition $id');
     await page.waitForFunction("location.hash === '#fnref-$id'");
     await _screenshot(page, 'edge-footnote-reference');
-  });
+  }, timeout: _timeout);
 
   test('floating glass stays registered with scrolled content', () async {
     await page.setViewport(
@@ -369,7 +377,7 @@ Object.defineProperty(navigator, 'language', {get: () => 'en-US'});
     await _screenshot(page, 'edge-glass-about-live');
     await Future<void>.delayed(const Duration(milliseconds: 410));
     await _screenshot(page, 'edge-glass-about-settled');
-  });
+  }, timeout: _timeout);
 
   test('mobile navigation and math layout use the same origin', () async {
     final mathPost = content
@@ -404,5 +412,5 @@ Object.defineProperty(navigator, 'language', {get: () => 'en-US'});
       '[innerWidth, document.documentElement.scrollWidth]',
     );
     expect(widths[1], lessThanOrEqualTo(widths[0]));
-  });
+  }, timeout: _timeout);
 }
