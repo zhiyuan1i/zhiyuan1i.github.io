@@ -5,6 +5,7 @@ import 'package:zhiyuan_li_blog/content/blog_content.dart';
 import 'package:zhiyuan_li_blog/theme/app_theme.dart';
 import 'package:zhiyuan_li_blog/widgets/glass_surface.dart';
 import 'package:zhiyuan_li_blog/widgets/markdown_view.dart';
+import 'package:zhiyuan_li_blog/widgets/motion.dart';
 import 'package:zhiyuan_li_blog/widgets/post_card.dart';
 
 class PostsScreen extends StatelessWidget {
@@ -56,7 +57,11 @@ class PostsScreen extends StatelessWidget {
             ),
           ),
         ),
-        for (final post in posts) PostCard(post: post),
+        for (final (index, post) in posts.indexed)
+          EntranceAnimation(
+            order: index + 1,
+            child: PostCard(post: post),
+          ),
       ],
     );
   }
@@ -79,140 +84,67 @@ class PostScreen extends StatelessWidget {
     final older = index >= 0 && index < posts.length - 1
         ? posts[index + 1]
         : null;
+    final routeAnimation = ModalRoute.of(context)?.animation;
+    Widget reveal(Widget child, int order) {
+      if (routeAnimation == null || MediaQuery.disableAnimationsOf(context)) {
+        return EntranceAnimation(order: order, child: child);
+      }
+      return AnimatedBuilder(
+        animation: routeAnimation,
+        builder: (context, _) {
+          if (routeAnimation.value < 0.45) return const SizedBox.shrink();
+          return EntranceAnimation(order: order, child: child);
+        },
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton.icon(
-            onPressed: () => context.go('$prefix/posts/'),
-            icon: const Icon(Icons.arrow_back_rounded, size: 17),
-            label: Text(language == 'en' ? 'All posts' : '全部文章'),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.primary,
+        EntranceAnimation(
+          distance: 8,
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => context.go('$prefix/posts/'),
+              icon: const Icon(Icons.arrow_back_rounded, size: 17),
+              label: Text(language == 'en' ? 'All posts' : '全部文章'),
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.primary,
+              ),
             ),
           ),
         ),
         const SizedBox(height: 12),
-        GlassSurface(
-          radius: 30,
-          blur: 28,
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? 23 : 52,
-            vertical: compact ? 30 : 48,
+        PostArticleHeader(post: post),
+        const SizedBox(height: 20),
+        reveal(
+          GlassSurface(
+            radius: 30,
+            blur: 28,
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? 23 : 52,
+              vertical: compact ? 30 : 42,
+            ),
+            child: MarkdownView(
+              data: post.body,
+              fragment: GoRouterState.of(context).uri.fragment,
+            ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                spacing: 9,
-                runSpacing: 9,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 11,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: Theme.of(context).colorScheme.primary
-                          .withValues(alpha: context.isDark ? 0.13 : 0.065),
-                    ),
-                    child: Text(
-                      post.primaryCategory,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                  if (post.math)
-                    MetaItem(
-                      icon: Icons.functions_rounded,
-                      label: language == 'en'
-                          ? 'Mathematical derivation'
-                          : '数学推导',
-                    ),
-                ],
-              ),
-              const SizedBox(height: 22),
-              Text(
-                post.title,
-                style: TextStyle(
-                  fontSize: compact ? 31 : 42,
-                  height: 1.35,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.8,
-                ),
-              ),
-              if (post.description.isNotEmpty) ...[
-                const SizedBox(height: 18),
-                Text(
-                  post.description,
-                  style: TextStyle(
-                    fontSize: 16,
-                    height: 1.75,
-                    color: context.secondaryText,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 22),
-              Wrap(
-                spacing: 14,
-                runSpacing: 10,
-                children: [
-                  MetaItem(
-                    icon: Icons.calendar_today_outlined,
-                    label: post.dateLabel,
-                  ),
-                  MetaItem(
-                    icon: Icons.schedule_rounded,
-                    label: language == 'en'
-                        ? '${post.readingMinutes} min read'
-                        : '${post.readingMinutes} 分钟阅读',
-                  ),
-                  const MetaItem(
-                    icon: Icons.person_outline_rounded,
-                    label: 'Zhiyuan Li',
-                  ),
-                ],
-              ),
-              if (post.tags.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                Wrap(
-                  spacing: 9,
-                  runSpacing: 10,
-                  children: [
-                    for (final tag in post.tags)
-                      TagChip(
-                        label: tag,
-                        onTap: () => context.go(
-                          '$prefix/tags/${Uri.encodeComponent(tag)}/',
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 30),
-                child: Divider(
-                  color: Theme.of(context).colorScheme.onSurface
-                      .withValues(alpha: 0.08),
-                ),
-              ),
-              MarkdownView(
-                data: post.body,
-                fragment: GoRouterState.of(context).uri.fragment,
-              ),
-            ],
-          ),
+          0,
         ),
-        if (newer != null || older != null) ...[
-          const SizedBox(height: 26),
-          _AdjacentPosts(language: language, newer: newer, older: older),
-        ],
+        if (newer != null || older != null)
+          reveal(
+            Padding(
+              padding: const EdgeInsets.only(top: 26),
+              child: _AdjacentPosts(
+                language: language,
+                newer: newer,
+                older: older,
+              ),
+            ),
+            1,
+          ),
       ],
     );
   }
@@ -352,28 +284,35 @@ class TagsScreen extends StatelessWidget {
                   child: Text(language == 'en' ? 'All tags' : '全部标签'),
                 ),
         ),
-        GlassSurface(
-          radius: 26,
-          padding: EdgeInsets.all(context.isCompact ? 22 : 30),
-          child: Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              for (final entry in tags.entries)
-                TagChip(
-                  label: entry.key,
-                  count: entry.value,
-                  selected: entry.key == tag,
-                  onTap: () => context.go(
-                    '$prefix/tags/${Uri.encodeComponent(entry.key)}/',
+        EntranceAnimation(
+          order: 1,
+          child: GlassSurface(
+            radius: 26,
+            padding: EdgeInsets.all(context.isCompact ? 22 : 30),
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                for (final entry in tags.entries)
+                  TagChip(
+                    label: entry.key,
+                    count: entry.value,
+                    selected: entry.key == tag,
+                    onTap: () => context.go(
+                      '$prefix/tags/${Uri.encodeComponent(entry.key)}/',
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
         if (tag != null) ...[
           const SizedBox(height: 34),
-          for (final post in posts) PostCard(post: post, compact: true),
+          for (final (index, post) in posts.indexed)
+            EntranceAnimation(
+              order: index + 2,
+              child: PostCard(post: post, compact: true),
+            ),
           if (posts.isEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 28),
@@ -414,7 +353,7 @@ class ArchivesScreen extends StatelessWidget {
               ? 'Every note, ordered by time.'
               : '沿时间线回看所有文章。',
         ),
-        for (final entry in groups.entries) ...[
+        for (final (groupIndex, entry) in groups.entries.indexed) ...[
           Padding(
             padding: const EdgeInsets.only(bottom: 18, top: 8),
             child: Text(
@@ -426,24 +365,27 @@ class ArchivesScreen extends StatelessWidget {
               ),
             ),
           ),
-          GlassSurface(
-            radius: 26,
-            padding: EdgeInsets.symmetric(
-              horizontal: context.isCompact ? 20 : 30,
-              vertical: 8,
-            ),
-            child: Column(
-              children: [
-                for (var index = 0; index < entry.value.length; index++) ...[
-                  if (index > 0)
-                    Divider(
-                      height: 1,
-                      color: Theme.of(context).colorScheme.onSurface
-                          .withValues(alpha: 0.07),
-                    ),
-                  _ArchiveRow(post: entry.value[index]),
+          EntranceAnimation(
+            order: groupIndex + 1,
+            child: GlassSurface(
+              radius: 26,
+              padding: EdgeInsets.symmetric(
+                horizontal: context.isCompact ? 20 : 30,
+                vertical: 8,
+              ),
+              child: Column(
+                children: [
+                  for (var index = 0; index < entry.value.length; index++) ...[
+                    if (index > 0)
+                      Divider(
+                        height: 1,
+                        color: Theme.of(context).colorScheme.onSurface
+                            .withValues(alpha: 0.07),
+                      ),
+                    _ArchiveRow(post: entry.value[index]),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
           const SizedBox(height: 30),
@@ -453,15 +395,28 @@ class ArchivesScreen extends StatelessWidget {
   }
 }
 
-class _ArchiveRow extends StatelessWidget {
+class _ArchiveRow extends StatefulWidget {
   const _ArchiveRow({required this.post});
 
   final BlogPost post;
 
   @override
+  State<_ArchiveRow> createState() => _ArchiveRowState();
+}
+
+class _ArchiveRowState extends State<_ArchiveRow> {
+  bool _hovered = false;
+  bool _focused = false;
+
+  @override
   Widget build(BuildContext context) {
+    final post = widget.post;
+    final active = _hovered || _focused;
+    final duration = AppMotion.resolve(context, AppMotion.quick);
     return InkWell(
-      onTap: () => context.go(post.path),
+      onTap: () => context.push(post.path),
+      onHover: (value) => setState(() => _hovered = value),
+      onFocusChange: (value) => setState(() => _focused = value),
       borderRadius: BorderRadius.circular(14),
       hoverColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.04),
       child: Padding(
@@ -487,11 +442,19 @@ class _ArchiveRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            Icon(
-              Icons.arrow_forward_rounded,
-              size: 17,
-              color: Theme.of(context).colorScheme.onSurface
-                  .withValues(alpha: 0.30),
+            AnimatedSlide(
+              offset: active ? const Offset(0.18, 0) : Offset.zero,
+              duration: duration,
+              curve: AppMotion.enter,
+              child: AnimatedOpacity(
+                opacity: active ? 0.85 : 0.30,
+                duration: duration,
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 17,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
             ),
           ],
         ),
@@ -518,13 +481,16 @@ class AboutScreen extends StatelessWidget {
               ? 'Engineering notes, open source, and a little about me.'
               : '关于工程、开源，以及这个博客背后的故事。',
         ),
-        GlassSurface(
-          radius: 30,
-          padding: EdgeInsets.symmetric(
-            horizontal: context.isCompact ? 24 : 46,
-            vertical: context.isCompact ? 28 : 42,
+        EntranceAnimation(
+          order: 1,
+          child: GlassSurface(
+            radius: 30,
+            padding: EdgeInsets.symmetric(
+              horizontal: context.isCompact ? 24 : 46,
+              vertical: context.isCompact ? 28 : 42,
+            ),
+            child: MarkdownView(data: page.body),
           ),
-          child: MarkdownView(data: page.body),
         ),
       ],
     );

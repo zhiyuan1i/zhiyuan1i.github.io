@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zhiyuan_li_blog/theme/app_theme.dart';
 
 import 'navigation_test.dart';
 
@@ -43,9 +44,29 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pump();
     await pumpBlog(tester, location: '/posts/test-post/');
-    final markdown = tester.widget<MarkdownBody>(find.byType(MarkdownBody));
+    final markdown = tester.widget<MarkdownBody>(
+      find.byType(MarkdownBody).first,
+    );
     expect(
       contrastRatio(markdown.styleSheet!.p!.color!, surface),
+      greaterThan(4.5),
+    );
+
+    await tester.tap(find.byKey(const Key('theme-button')));
+    await pumpBlogFrames(tester);
+    final darkMarkdown = tester.widget<MarkdownBody>(
+      find.byType(MarkdownBody).first,
+    );
+    expect(darkMarkdown.styleSheet!.p!.color, AppColors.darkInk);
+    expect(
+      darkMarkdown.styleSheet!.blockquote!.color,
+      AppColors.darkSecondaryText,
+    );
+    expect(
+      contrastRatio(
+        darkMarkdown.styleSheet!.p!.color!,
+        AppColors.darkBackground,
+      ),
       greaterThan(4.5),
     );
   });

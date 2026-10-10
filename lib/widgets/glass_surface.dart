@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 import 'package:zhiyuan_li_blog/theme/app_theme.dart';
+import 'package:zhiyuan_li_blog/widgets/motion.dart';
 
 class GlassSurface extends StatefulWidget {
   const GlassSurface({
@@ -11,6 +12,7 @@ class GlassSurface extends StatefulWidget {
     this.padding = const EdgeInsets.all(24),
     this.radius = 28,
     this.onTap,
+    this.onHoverChanged,
     this.semanticLabel,
     this.selected = false,
     this.hoverElevation = true,
@@ -22,6 +24,7 @@ class GlassSurface extends StatefulWidget {
   final EdgeInsetsGeometry padding;
   final double radius;
   final VoidCallback? onTap;
+  final ValueChanged<bool>? onHoverChanged;
   final String? semanticLabel;
   final bool selected;
   final bool hoverElevation;
@@ -35,12 +38,19 @@ class GlassSurface extends StatefulWidget {
 class _GlassSurfaceState extends State<GlassSurface> {
   bool _hovered = false;
   bool _focused = false;
+  bool _pressed = false;
 
-  bool get _active => _hovered || _focused || widget.selected;
+  bool get _active => _hovered || _focused || _pressed || widget.selected;
 
   void _setHovered(bool value) {
     if (_hovered == value) return;
     setState(() => _hovered = value);
+    widget.onHoverChanged?.call(value);
+  }
+
+  void _setPressed(bool value) {
+    if (_pressed == value) return;
+    setState(() => _pressed = value);
   }
 
   @override
@@ -48,12 +58,15 @@ class _GlassSurfaceState extends State<GlassSurface> {
     final isDark = context.isDark;
     final accent = Theme.of(context).colorScheme.primary;
     final borderRadius = BorderRadius.circular(widget.radius);
-    final canHover = widget.onTap != null && widget.hoverElevation;
+    final lifted =
+        widget.onTap != null && widget.hoverElevation && _hovered && !_pressed;
+    final scale = _pressed ? 0.985 : (lifted ? 1.006 : 1.0);
     final content = Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: widget.onTap,
         onHover: widget.onTap == null ? null : _setHovered,
+        onHighlightChanged: widget.onTap == null ? null : _setPressed,
         onFocusChange: widget.onTap == null
             ? null
             : (value) => setState(() => _focused = value),
@@ -105,20 +118,23 @@ class _GlassSurfaceState extends State<GlassSurface> {
           );
 
     Widget surface = AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOutCubic,
-      transform: Matrix4.translationValues(0, canHover && _hovered ? -3 : 0, 0),
+      duration: AppMotion.resolve(
+        context,
+        _pressed ? AppMotion.press : AppMotion.quick,
+      ),
+      curve: _pressed ? AppMotion.enter : AppMotion.release,
+      transformAlignment: Alignment.center,
+      transform: Matrix4.translationValues(0, lifted ? -3.5 : 0, 0)
+        ..scaleByDouble(scale, scale, 1, 1),
       decoration: BoxDecoration(
         borderRadius: borderRadius,
         boxShadow: [
           BoxShadow(
             color: (isDark ? Colors.black : const Color(0xFF52647E)).withValues(
-              alpha: canHover && _hovered
-                  ? (isDark ? 0.24 : 0.18)
-                  : (isDark ? 0.20 : 0.14),
+              alpha: lifted ? (isDark ? 0.24 : 0.18) : (isDark ? 0.20 : 0.14),
             ),
-            blurRadius: canHover && _hovered ? 32 : 24,
-            offset: Offset(0, canHover && _hovered ? 13 : 9),
+            blurRadius: lifted ? 32 : 24,
+            offset: Offset(0, lifted ? 13 : 9),
             spreadRadius: -8,
           ),
         ],
@@ -177,8 +193,8 @@ class _FrostedSurface extends StatelessWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
+          duration: AppMotion.resolve(context, AppMotion.quick),
+          curve: AppMotion.standard,
           decoration: BoxDecoration(
             borderRadius: borderRadius,
             border: Border.all(color: borderColor),
@@ -213,18 +229,33 @@ class GlassIconButton extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.onPressed,
+    this.onPressedAt,
     this.semanticLabel,
   });
 
   final IconData icon;
   final String tooltip;
   final VoidCallback onPressed;
+  final void Function(Offset origin)? onPressedAt;
   final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      onPressed: onPressed,
+      onPressed: onPressedAt == null
+          ? onPressed
+          : () {
+              final renderObject = context.findRenderObject();
+              if (renderObject is! RenderBox) {
+                onPressedAt!(Offset.zero);
+                return;
+              }
+              onPressedAt!(
+                renderObject.localToGlobal(
+                  renderObject.size.center(Offset.zero),
+                ),
+              );
+            },
       tooltip: tooltip,
       iconSize: 20,
       style: IconButton.styleFrom(
@@ -236,7 +267,23 @@ class GlassIconButton extends StatelessWidget {
         hoverColor: Theme.of(context).colorScheme.primary
             .withValues(alpha: 0.08),
       ),
-      icon: Semantics(label: semanticLabel ?? tooltip, child: Icon(icon)),
+      icon: AnimatedSwitcher(
+        duration: AppMotion.resolve(context, AppMotion.quick),
+        switchInCurve: AppMotion.enter,
+        switchOutCurve: AppMotion.exit,
+        transitionBuilder: (child, animation) => RotationTransition(
+          turns: Tween<double>(begin: -0.05, end: 0).animate(animation),
+          child: ScaleTransition(
+            scale: animation,
+            child: FadeTransition(opacity: animation, child: child),
+          ),
+        ),
+        child: Semantics(
+          key: ValueKey(icon),
+          label: semanticLabel ?? tooltip,
+          child: Icon(icon),
+        ),
+      ),
     );
   }
 }

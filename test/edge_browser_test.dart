@@ -65,6 +65,22 @@ Future<void> _clickSemantic(
   await Future<void>.delayed(const Duration(milliseconds: 320));
 }
 
+Future<double> _semanticTop(Page page, String text) async {
+  final top = await page.evaluate<num?>(
+    '''
+    text => {
+      const element = Array.from(document.querySelectorAll('flt-semantics'))
+        .filter(item => item.textContent.includes(text))
+        .sort((a, b) => a.textContent.length - b.textContent.length)[0];
+      return element ? element.getBoundingClientRect().top : null;
+    }
+    ''',
+    args: [text],
+  );
+  if (top == null) throw StateError('Semantic element not found: $text');
+  return top.toDouble();
+}
+
 Future<void> _expectPath(Page page, String expected) async {
   final uri = Uri.parse(page.url!);
   final actualOrigin = '${uri.scheme}://${uri.host}:${uri.port}';
@@ -177,7 +193,11 @@ void main() {
       executablePath: await _executablePath(),
       noSandboxFlag: true,
       defaultViewport: const DeviceViewport(width: 1440, height: 1000),
-      args: const ['--lang=zh-CN'],
+      args: const [
+        '--lang=zh-CN',
+        '--enable-unsafe-swiftshader',
+        '--use-angle=d3d11',
+      ],
     );
     page = await browser.newPage();
     _watch(page, errors);
@@ -206,7 +226,21 @@ Object.defineProperty(navigator, 'language', {get: () => 'en-US'});
     await _expectPath(english, '/en');
     await _screenshot(english, 'edge-home-en-light');
     await _clickSemantic(english, 'RSS', occurrence: 1);
-    await _expectPath(english, '/en/index.xml');
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+    Page? rssPage;
+    final pages = await browser.pages;
+    for (final candidate in pages) {
+      if (Uri.parse(candidate.url!).path == '/en/index.xml') {
+        rssPage = candidate;
+        break;
+      }
+    }
+    if (rssPage == null) {
+      throw StateError(
+        'English RSS did not open: ${pages.map((page) => page.url).toList()}',
+      );
+    }
+    if (rssPage != english) await rssPage.close();
     await english.close();
   });
 
@@ -237,6 +271,9 @@ Object.defineProperty(navigator, 'language', {get: () => 'en-US'});
       await _clickSemantic(page, firstPost.title);
       await _expectPath(page, firstPost.path);
       await _expectSemantic(page, '全部文章');
+      await _screenshot(page, 'edge-post-expand-flight');
+      await Future<void>.delayed(const Duration(milliseconds: 350));
+      await _screenshot(page, 'edge-post-article');
 
       await page.setViewport(
         const DeviceViewport(width: 1440, height: 1000, deviceScaleFactor: 2),
@@ -246,10 +283,16 @@ Object.defineProperty(navigator, 'language', {get: () => 'en-US'});
       if (mathPost.tags.isNotEmpty) {
         await _expectSemantic(page, mathPost.tags.first);
       }
+      final scrollMarker = mathPost.tags.isEmpty
+          ? '全部文章'
+          : mathPost.tags.first;
+      final summaryTop = await _semanticTop(page, scrollMarker);
       await page.mouse.wheel(deltaY: 2200);
       await Future<void>.delayed(const Duration(milliseconds: 40));
       await _screenshot(page, 'edge-glass-live-dpr2');
       await Future<void>.delayed(const Duration(milliseconds: 410));
+      final scrolledSummaryTop = await _semanticTop(page, scrollMarker);
+      expect(summaryTop - scrolledSummaryTop, greaterThan(500));
       final body = await page.evaluate<String>('document.body.innerText');
       expect(body, isNot(contains('Parser Error')));
       expect(body, isNot(contains(r'$\mathbb')));
@@ -260,10 +303,36 @@ Object.defineProperty(navigator, 'language', {get: () => 'en-US'});
       await _screenshot(page, 'edge-archives-light');
       await _clickSemantic(page, 'Dark mode');
       await _expectSemantic(page, 'Light mode');
+      await _screenshot(page, 'edge-theme-ripple');
       await Future<void>.delayed(const Duration(milliseconds: 350));
       await _screenshot(page, 'edge-archives-dark');
+      await _open(page, firstPost.path);
+      await _screenshot(page, 'edge-post-dark');
     },
+    timeout: const Timeout(Duration(seconds: 60)),
   );
+
+  test('rapid article scrolling starts with complete content', () async {
+    final post = content.postsFor(
+      'zh',
+    ).firstWhere((post) => post.slug == 'kda-mathematics');
+    await page.setViewport(const DeviceViewport(width: 1440, height: 1000));
+    await _open(page, '/posts/');
+    await _clickSemantic(page, post.title);
+    await _expectPath(page, post.path);
+    final initialBody = await page.evaluate<String>('document.body.innerText');
+    expect(initialBody, contains('Footnote 19'));
+    final scrollMarker = post.tags.first;
+    final markerTop = await _semanticTop(page, scrollMarker);
+    await page.mouse.wheel(deltaY: 2600);
+    await Future<void>.delayed(const Duration(milliseconds: 450));
+    final scrolledMarkerTop = await _semanticTop(page, scrollMarker);
+    expect(markerTop - scrolledMarkerTop, greaterThan(500));
+    await page.mouse.wheel(deltaY: 5200);
+    await Future<void>.delayed(const Duration(milliseconds: 450));
+    final body = await page.evaluate<String>('document.body.innerText');
+    expect(body, isNot(contains('Parser Error')));
+  }, timeout: const Timeout(Duration(seconds: 60)));
 
   test('article anchors and footnotes are interactive in Edge', () async {
     await page.setViewport(const DeviceViewport(width: 1440, height: 1000));
@@ -283,9 +352,9 @@ Object.defineProperty(navigator, 'language', {get: () => 'en-US'});
     final id = footnotePattern.firstMatch(footnotePost.source)!.group(1)!;
     await _open(page, footnotePost.path);
     await _clickSemantic(page, 'Footnote $id');
-    expect(Uri.parse(page.url!).fragment, 'fn-$id');
+    await page.waitForFunction("location.hash === '#fn-$id'");
     await _clickSemantic(page, 'Footnote definition $id');
-    expect(Uri.parse(page.url!).fragment, 'fnref-$id');
+    await page.waitForFunction("location.hash === '#fnref-$id'");
     await _screenshot(page, 'edge-footnote-reference');
   });
 
@@ -322,8 +391,12 @@ Object.defineProperty(navigator, 'language', {get: () => 'en-US'});
     if (mathPost.tags.isNotEmpty) {
       await _expectSemantic(page, mathPost.tags.first);
     }
+    final scrollMarker = mathPost.tags.isEmpty ? '全部文章' : mathPost.tags.first;
+    final summaryTop = await _semanticTop(page, scrollMarker);
     await page.mouse.wheel(deltaY: 5200);
     await Future<void>.delayed(const Duration(milliseconds: 450));
+    final scrolledSummaryTop = await _semanticTop(page, scrollMarker);
+    expect(summaryTop - scrolledSummaryTop, greaterThan(1000));
     final body = await page.evaluate<String>('document.body.innerText');
     expect(body, isNot(contains('Parser Error')));
     await _screenshot(page, 'edge-math-mobile');

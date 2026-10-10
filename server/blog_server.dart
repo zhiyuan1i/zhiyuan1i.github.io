@@ -26,15 +26,17 @@ Future<void> main(List<String> arguments) async {
     'Markdown example: curl http://${server.host}:${server.port}/posts/',
   );
   late StreamSubscription<ProcessSignal> interrupt;
-  late StreamSubscription<ProcessSignal> terminate;
+  StreamSubscription<ProcessSignal>? terminate;
   Future<void> shutdown(_) async {
     await interrupt.cancel();
-    await terminate.cancel();
+    await terminate?.cancel();
     await server.close();
   }
 
   interrupt = ProcessSignal.sigint.watch().listen(shutdown);
-  terminate = ProcessSignal.sigterm.watch().listen(shutdown);
+  if (!Platform.isWindows) {
+    terminate = ProcessSignal.sigterm.watch().listen(shutdown);
+  }
 }
 
 class ServerOptions {
@@ -494,7 +496,7 @@ String renderRss(
             '    </item>';
       })
       .join('\n');
-  final title = language == 'en' ? 'Zhiyuan Li' : 'Zhiyuan Li 的个人博客';
+  final title = language == 'en' ? "Zhiyuan's Blog" : 'Zhiyuan 的博客';
   final description = language == 'en'
       ? 'A personal blog about technology, life, reading, and occasional thoughts.'
       : 'Zhiyuan Li 的个人博客，记录技术、生活、阅读与随想。';
@@ -650,7 +652,9 @@ class ContentRepository {
   String _index(String language, {bool postsOnly = false}) {
     final english = language == 'en';
     final prefix = english ? '/en' : '';
-    final title = postsOnly ? (english ? 'Posts' : '文章') : 'Zhiyuan Li';
+    final title = postsOnly
+        ? (english ? 'Posts' : '文章')
+        : (english ? "Zhiyuan's Blog" : 'Zhiyuan 的博客');
     final description = english
         ? 'A personal blog about technology, life, reading, and occasional thoughts.'
         : 'Zhiyuan Li 的个人博客，记录技术、生活、阅读与随想。';

@@ -7,10 +7,17 @@ abstract final class AppColors {
   static const darkBackground = Color(0xFF11151C);
   static const lightInk = Color(0xFF17202D);
   static const darkInk = Color(0xFFE9EEF6);
+  static const darkSecondaryText = Color(0xFFB7C3D4);
+  static const darkMutedText = Color(0xFF93A2B8);
 }
 
+String siteTitle(String language) =>
+    language == 'en' ? "Zhiyuan's Blog" : 'Zhiyuan 的博客';
+
 abstract final class AppTheme {
+  static const cjkFontFamily = 'Zhiyuan Sans SC';
   static const fontFallback = [
+    cjkFontFamily,
     'PingFang SC',
     'Hiragino Sans GB',
     'Microsoft YaHei',
@@ -82,9 +89,13 @@ extension BlogBuildContext on BuildContext {
   double get pageHorizontalPadding =>
       MediaQuery.sizeOf(this).width < 720 ? 16 : 28;
   Color get readingText =>
-      Theme.of(this).colorScheme.onSurface.withValues(alpha: 0.92);
+      isDark ? AppColors.darkInk : Theme.of(this).colorScheme.onSurface.withValues(alpha: 0.92);
   Color get secondaryText =>
-      Theme.of(this).colorScheme.onSurface.withValues(alpha: 0.80);
+      isDark
+          ? AppColors.darkSecondaryText
+          : Theme.of(this).colorScheme.onSurface.withValues(alpha: 0.80);
   Color get mutedText =>
-      Theme.of(this).colorScheme.onSurface.withValues(alpha: 0.72);
+      isDark
+          ? AppColors.darkMutedText
+          : Theme.of(this).colorScheme.onSurface.withValues(alpha: 0.72);
 }

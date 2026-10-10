@@ -16,4 +16,19 @@ void main() {
     expect(find.text('还没有文章。'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('launch splash covers font loading without a fixed delay', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const BlogApp(
+        content: BlogContent(posts: [], pages: {}),
+      ),
+    );
+    expect(find.text("Zhiyuan's Blog"), findsOneWidget);
+    await pumpBlogFrames(tester);
+    expect(find.text('Zhiyuan 的博客'), findsOneWidget);
+    expect(find.text("Zhiyuan's Blog"), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }

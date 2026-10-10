@@ -130,7 +130,7 @@ void main() {
         .readAsString();
     expect(englishHtml, contains('<html lang="en-US">'));
     expect(englishHtml, contains('href="/en/index.md"'));
-    expect(englishHtml, contains('<title>Zhiyuan Li · Blog</title>'));
+    expect(englishHtml, contains("<title>Zhiyuan's Blog</title>"));
     expect(
       englishHtml,
       contains(
@@ -148,7 +148,10 @@ void main() {
       ),
     );
     expect(englishHtml, contains('<main id="static-content">'));
-    expect(englishHtml, contains('<h1>Zhiyuan Li</h1>'));
+    expect(englishHtml, contains("<h1>Zhiyuan's Blog</h1>"));
+    final chineseHtml = await File('${output.path}/index.html').readAsString();
+    expect(chineseHtml, contains('<title>Zhiyuan 的博客</title>'));
+    expect(chineseHtml, contains('<h1>Zhiyuan 的博客</h1>'));
     expect(await File('${output.path}/404.html').exists(), isTrue);
     expect(await File('${output.path}/.nojekyll').exists(), isTrue);
     expect(

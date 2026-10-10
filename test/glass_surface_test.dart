@@ -25,6 +25,14 @@ BoxDecoration decorationWithShadow(WidgetTester tester, Finder surface) {
       .firstWhere((decoration) => decoration.boxShadow != null);
 }
 
+AnimatedContainer transformingSurface(WidgetTester tester, Finder surface) {
+  return tester
+      .widgetList<AnimatedContainer>(
+        find.descendant(of: surface, matching: find.byType(AnimatedContainer)),
+      )
+      .firstWhere((container) => container.transform != null);
+}
+
 void main() {
   testWidgets('navigation uses one stable optical lens and balanced shadow', (
     tester,
@@ -76,6 +84,27 @@ void main() {
     await pumpBlog(tester, location: '/posts/test-post/');
     expect(find.byType(LiquidGlassLens), findsOneWidget);
     expect(find.byKey(const Key('markdown-body')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('post card compresses on press and releases smoothly', (
+    tester,
+  ) async {
+    await pumpBlog(tester, location: '/posts/');
+    final card = find.byKey(const Key('post-card-test-post'));
+    final resting = transformingSurface(tester, card);
+    expect(resting.transform!.storage[0], closeTo(1, 0.001));
+
+    final gesture = await tester.startGesture(tester.getCenter(card));
+    await tester.pump(const Duration(milliseconds: 140));
+    final pressed = transformingSurface(tester, card);
+    expect(pressed.transform!.storage[0], lessThan(0.99));
+
+    await gesture.cancel();
+    await pumpBlogFrames(tester, count: 4);
+    final released = transformingSurface(tester, card);
+    expect(released.transform!.storage[0], closeTo(1, 0.001));
+    expect(find.byKey(const Key('markdown-body')), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

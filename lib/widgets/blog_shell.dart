@@ -1,11 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
 import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:zhiyuan_li_blog/theme/app_theme.dart';
 import 'package:zhiyuan_li_blog/widgets/glass_surface.dart';
+import 'package:zhiyuan_li_blog/widgets/motion.dart';
+
+typedef ThemeChangedCallback = void Function(ThemeMode mode, Offset origin);
 
 class BlogShell extends StatefulWidget {
   const BlogShell({
@@ -16,6 +20,7 @@ class BlogShell extends StatefulWidget {
     required this.themeMode,
     required this.onThemeChanged,
     required this.pageTitle,
+    required this.scrollOffsets,
     this.maxWidth = 1120,
   });
 
@@ -23,9 +28,10 @@ class BlogShell extends StatefulWidget {
   final String currentPath;
   final String language;
   final ValueNotifier<ThemeMode> themeMode;
-  final ValueChanged<ThemeMode> onThemeChanged;
+  final ThemeChangedCallback onThemeChanged;
   final String pageTitle;
   final double maxWidth;
+  final Map<String, double> scrollOffsets;
 
   @override
   State<BlogShell> createState() => _BlogShellState();
@@ -33,7 +39,6 @@ class BlogShell extends StatefulWidget {
 
 class _BlogShellState extends State<BlogShell> {
   late final LiquidGlassViewController _glassController;
-  late final ScrollController _scrollController;
   bool _liveCapture = false;
   Size? _lastSize;
   bool? _lastDark;
@@ -42,14 +47,12 @@ class _BlogShellState extends State<BlogShell> {
   void initState() {
     super.initState();
     _glassController = LiquidGlassViewController();
-    _scrollController = ScrollController();
   }
 
   @override
   void didUpdateWidget(BlogShell oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.currentPath != widget.currentPath) {
-      _scrollController.jumpTo(0);
       _captureAfterFrame();
     }
   }
@@ -63,23 +66,29 @@ class _BlogShellState extends State<BlogShell> {
   void _setLiveCapture(bool value) {
     if (_liveCapture == value) return;
     _liveCapture = value;
-    if (value) {
-      _glassController.startRealtimeCapture();
-    } else {
-      _glassController.stopRealtimeCapture();
-      _captureAfterFrame();
+    void apply() {
+      if (value) {
+        _glassController.startRealtimeCapture();
+      } else {
+        _glassController.stopRealtimeCapture();
+        _captureAfterFrame();
+      }
     }
-  }
 
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
+    final phase = WidgetsBinding.instance.schedulerPhase;
+    if (phase == SchedulerPhase.idle ||
+        phase == SchedulerPhase.postFrameCallbacks) {
+      apply();
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _liveCapture != value) return;
+      apply();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final horizontal = context.pageHorizontalPadding;
     final size = MediaQuery.sizeOf(context);
     final dark = context.isDark;
     if (_lastSize != size || _lastDark != dark) {
@@ -97,7 +106,7 @@ class _BlogShellState extends State<BlogShell> {
           backgroundWidget: Stack(
             children: [
               const Positioned.fill(child: AmbientBackground()),
-              SafeArea(
+              Positioned.fill(
                 child: NotificationListener<ScrollNotification>(
                   onNotification: (notification) {
                     if (notification is ScrollStartNotification) {
@@ -107,29 +116,7 @@ class _BlogShellState extends State<BlogShell> {
                     }
                     return false;
                   },
-                  child: SingleChildScrollView(
-                    controller: _scrollController,
-                    key: const Key('page-scroll-view'),
-                    padding: EdgeInsets.fromLTRB(
-                      horizontal,
-                      116,
-                      horizontal,
-                      32,
-                    ),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: widget.maxWidth),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            widget.child,
-                            const SizedBox(height: 64),
-                            BlogFooter(language: widget.language),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                  child: widget.child,
                 ),
               ),
             ],
@@ -164,6 +151,99 @@ class _BlogShellState extends State<BlogShell> {
   }
 }
 
+class BlogPageScaffold extends StatefulWidget {
+  const BlogPageScaffold({
+    super.key,
+    required this.child,
+    required this.currentPath,
+    required this.language,
+    required this.scrollOffsets,
+    this.maxWidth = 1120,
+  });
+
+  final Widget child;
+  final String currentPath;
+  final String language;
+  final double maxWidth;
+  final Map<String, double> scrollOffsets;
+
+  @override
+  State<BlogPageScaffold> createState() => _BlogPageScaffoldState();
+}
+
+class _BlogPageScaffoldState extends State<BlogPageScaffold> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _restoreScrollOffset();
+  }
+
+  @override
+  void didUpdateWidget(BlogPageScaffold oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentPath != widget.currentPath) {
+      _saveScrollOffset(oldWidget.currentPath);
+      _restoreScrollOffset();
+    }
+  }
+
+  void _saveScrollOffset(String path) {
+    if (!_scrollController.hasClients) return;
+    widget.scrollOffsets[path] = _scrollController.offset;
+  }
+
+  void _restoreScrollOffset() {
+    final path = widget.currentPath;
+    final offset = widget.scrollOffsets[path] ?? 0.0;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || widget.currentPath != path) return;
+      if (!_scrollController.hasClients) return;
+      final max = _scrollController.position.maxScrollExtent;
+      final target = offset.clamp(0.0, max).toDouble();
+      if ((_scrollController.offset - target).abs() > 0.5) {
+        _scrollController.jumpTo(target);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _saveScrollOffset(widget.currentPath);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final horizontal = context.pageHorizontalPadding;
+    return SafeArea(
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        key: PageStorageKey<String>(
+          'page-scroll-view-${widget.currentPath}',
+        ),
+        padding: EdgeInsets.fromLTRB(horizontal, 116, horizontal, 32),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: widget.maxWidth),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                widget.child,
+                const SizedBox(height: 64),
+                BlogFooter(language: widget.language),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class FloatingNavigation extends StatefulWidget {
   const FloatingNavigation({
     super.key,
@@ -176,7 +256,7 @@ class FloatingNavigation extends StatefulWidget {
   final String currentPath;
   final String language;
   final ValueNotifier<ThemeMode> themeMode;
-  final ValueChanged<ThemeMode> onThemeChanged;
+  final ThemeChangedCallback onThemeChanged;
 
   @override
   State<FloatingNavigation> createState() => _FloatingNavigationState();
@@ -270,8 +350,9 @@ class _FloatingNavigationState extends State<FloatingNavigation> {
                       language: widget.language,
                       isDark: isDark,
                       onLanguage: _switchLanguage,
-                      onTheme: () => widget.onThemeChanged(
+                      onTheme: (origin) => widget.onThemeChanged(
                         isDark ? ThemeMode.light : ThemeMode.dark,
+                        origin,
                       ),
                     ),
                   ),
@@ -294,8 +375,9 @@ class _FloatingNavigationState extends State<FloatingNavigation> {
                         language: widget.language,
                         isDark: isDark,
                         onLanguage: _switchLanguage,
-                        onTheme: () => widget.onThemeChanged(
+                        onTheme: (origin) => widget.onThemeChanged(
                           isDark ? ThemeMode.light : ThemeMode.dark,
+                        origin,
                         ),
                       ),
                       const SizedBox(width: 2),
@@ -311,7 +393,18 @@ class _FloatingNavigationState extends State<FloatingNavigation> {
                   ),
                 ),
                 AnimatedCrossFade(
-                  duration: const Duration(milliseconds: 180),
+                  duration: AppMotion.resolve(context, AppMotion.route),
+                  sizeCurve: AppMotion.emphasized,
+                  firstCurve: const Interval(
+                    0,
+                    0.55,
+                    curve: Curves.easeInCubic,
+                  ),
+                  secondCurve: const Interval(
+                    0.18,
+                    1,
+                    curve: Curves.easeOutCubic,
+                  ),
                   crossFadeState: _menuOpen
                       ? CrossFadeState.showSecond
                       : CrossFadeState.showFirst,
@@ -418,7 +511,7 @@ class _Actions extends StatelessWidget {
   final String language;
   final bool isDark;
   final VoidCallback onLanguage;
-  final VoidCallback onTheme;
+  final void Function(Offset origin) onTheme;
 
   @override
   Widget build(BuildContext context) {
@@ -459,7 +552,8 @@ class _Actions extends StatelessWidget {
           key: const Key('theme-button'),
           icon: isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
           tooltip: isDark ? 'Light mode' : 'Dark mode',
-          onPressed: onTheme,
+          onPressed: () => onTheme(Offset.zero),
+          onPressedAt: onTheme,
         ),
       ],
     );
@@ -493,8 +587,8 @@ class _NavigationItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(15),
           hoverColor: scheme.primary.withValues(alpha: 0.055),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOut,
+            duration: AppMotion.resolve(context, AppMotion.quick),
+            curve: AppMotion.standard,
             alignment: expanded ? Alignment.centerLeft : Alignment.center,
             padding: EdgeInsets.symmetric(
               horizontal: expanded ? 18 : 15,
@@ -515,12 +609,31 @@ class _NavigationItem extends StatelessWidget {
                     : Colors.transparent,
               ),
             ),
-            child: Text(
-              label,
+            child: AnimatedDefaultTextStyle(
+              duration: AppMotion.resolve(context, AppMotion.quick),
+              curve: AppMotion.standard,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 color: selected ? scheme.primary : context.secondaryText,
+              ),
+              child: AnimatedSwitcher(
+                duration: AppMotion.resolve(context, AppMotion.quick),
+                switchInCurve: AppMotion.enter,
+                switchOutCurve: AppMotion.exit,
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: animation.drive(
+                      Tween<Offset>(
+                        begin: const Offset(0, 0.12),
+                        end: Offset.zero,
+                      ),
+                    ),
+                    child: child,
+                  ),
+                ),
+                child: Text(label, key: ValueKey(label)),
               ),
             ),
           ),

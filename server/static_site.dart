@@ -106,9 +106,8 @@ String _renderRouteHtml({
   final parsed = ParsedSource(route.source);
   final post = _postForRoute(content, path);
   final contentTitle = _contentTitle(parsed, english);
-  final title = neutralPath == '/'
-      ? 'Zhiyuan Li · ${english ? 'Blog' : '个人博客'}'
-      : '$contentTitle · Zhiyuan Li';
+  final siteName = english ? "Zhiyuan's Blog" : 'Zhiyuan 的博客';
+  final title = neutralPath == '/' ? siteName : '$contentTitle · Zhiyuan Li';
   final description = _routeDescription(neutralPath, parsed, post, english);
   final canonical = canonicalBase.resolve(path).toString();
   final image = canonicalBase
@@ -118,7 +117,7 @@ String _renderRouteHtml({
   final additionalHead = StringBuffer()
     ..writeln('  <link rel="canonical" href="${_escape(canonical)}">')
     ..writeln('  <meta property="og:url" content="${_escape(canonical)}">')
-    ..writeln('  <meta property="og:site_name" content="Zhiyuan Li">')
+    ..writeln('  <meta property="og:site_name" content="$siteName">')
     ..writeln('  <meta name="twitter:title" content="${_escape(title)}">')
     ..writeln(
       '  <meta name="twitter:description" content="${_escape(description)}">',
