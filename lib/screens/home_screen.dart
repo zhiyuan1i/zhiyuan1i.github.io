@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:zhiyuan_li_blog/content/blog_content.dart';
 import 'package:zhiyuan_li_blog/theme/app_theme.dart';
 import 'package:zhiyuan_li_blog/widgets/glass_surface.dart';
+import 'package:zhiyuan_li_blog/widgets/motion.dart';
 import 'package:zhiyuan_li_blog/widgets/post_card.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -20,65 +21,63 @@ class HomeScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TweenAnimationBuilder<double>(
-          duration: const Duration(milliseconds: 480),
-          curve: Curves.easeOutCubic,
-          tween: Tween(begin: 0, end: 1),
-          builder: (context, value, child) => Opacity(
-            opacity: value,
-            child: Transform.translate(
-              offset: Offset(0, 12 * (1 - value)),
-              child: child,
-            ),
-          ),
-          child: _ProfileHero(language: language),
-        ),
+        EntranceAnimation(child: _ProfileHero(language: language)),
         const SizedBox(height: 72),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    language == 'en' ? 'LATEST NOTES' : '最近更新',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.7,
-                      color: Theme.of(context).colorScheme.primary,
+        EntranceAnimation(
+          order: 1,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      language == 'en' ? 'LATEST NOTES' : '最近更新',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.7,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    language == 'en' ? 'From the blog' : '文章精选',
-                    style: const TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.5,
+                    const SizedBox(height: 8),
+                    Text(
+                      language == 'en' ? 'From the blog' : '文章精选',
+                      style: const TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.5,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            TextButton.icon(
-              onPressed: () => context.go('$prefix/posts/'),
-              iconAlignment: IconAlignment.end,
-              icon: const Icon(Icons.arrow_forward_rounded, size: 17),
-              label: Text(language == 'en' ? 'View all' : '查看全部'),
-              style: TextButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.primary,
-                textStyle: const TextStyle(fontWeight: FontWeight.w600),
+              TextButton.icon(
+                onPressed: () => context.go('$prefix/posts/'),
+                iconAlignment: IconAlignment.end,
+                icon: const Icon(Icons.arrow_forward_rounded, size: 17),
+                label: Text(language == 'en' ? 'View all' : '查看全部'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.primary,
+                  textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: 24),
-        for (final post in posts.take(3)) PostCard(post: post, compact: true),
+        for (final (index, post) in posts.take(3).indexed)
+          EntranceAnimation(
+            order: index + 2,
+            child: PostCard(post: post, compact: true),
+          ),
         if (posts.isEmpty)
-          GlassSurface(
-            child: Text(language == 'en' ? 'No posts yet.' : '还没有文章。'),
+          EntranceAnimation(
+            order: 2,
+            child: GlassSurface(
+              child: Text(language == 'en' ? 'No posts yet.' : '还没有文章。'),
+            ),
           ),
       ],
     );
@@ -157,7 +156,7 @@ class _ProfileHero extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         Text(
-          'Zhiyuan Li',
+          siteTitle(language),
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: context.isCompact ? 44 : 56,
@@ -171,8 +170,8 @@ class _ProfileHero extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 650),
           child: Text(
             language == 'en'
-                ? 'AI infrastructure engineer focused on efficient Linear Attention and inference systems. I contributed to Kimi Linear and Kimi Delta Attention. I write about technology, life, reading, and occasional thoughts.'
-                : '专注于 Linear Attention 的高效实现与推理优化，参与了 Kimi Linear 与 Kimi Delta Attention 的开发。这里记录技术、生活、阅读与随想。',
+                ? 'I explore areas that interest me, currently focusing on LLM inference infrastructure. I write about technology, life, reading, and occasional thoughts.'
+                : '专注于做感兴趣的领域，目前主要在做 LLM Inference Infra。这里记录技术、生活、阅读与随想。',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,

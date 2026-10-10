@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:zhiyuan_li_blog/app.dart';
+import 'package:zhiyuan_li_blog/screens/content_screens.dart';
 import 'package:zhiyuan_li_blog/widgets/blog_shell.dart';
 
 import 'test_content.dart';
 
-Future<void> pumpBlogFrames(WidgetTester tester, {int count = 6}) async {
+Future<void> pumpBlogFrames(WidgetTester tester, {int count = 14}) async {
   for (var index = 0; index < count; index++) {
     await tester.pump(const Duration(milliseconds: 80));
   }
@@ -42,6 +43,29 @@ void main() {
     );
     expect(find.byKey(const Key('brand-avatar')), findsOneWidget);
     expect(find.text('ZL'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('floating navigation stays mounted across page transitions', (
+    tester,
+  ) async {
+    await pumpBlog(tester);
+    final navigation = find.byType(FloatingNavigation);
+    final shell = find.byType(BlogShell);
+    final navigationState = tester.state(navigation);
+    final shellState = tester.state(shell);
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const Key('desktop-primary-navigation')),
+        matching: find.text('文章'),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(tester.state(navigation), same(navigationState));
+    expect(tester.state(shell), same(shellState));
+    await pumpBlogFrames(tester);
+    expect(currentPath(tester), '/posts');
     expect(tester.takeException(), isNull);
   });
 
@@ -89,16 +113,135 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('post card expands and returns with a shared glass hero', (
+    tester,
+  ) async {
+    await pumpBlog(tester, location: '/posts/', size: const Size(1280, 600));
+    final card = find.byKey(const Key('post-card-test-post'));
+    final shuttle = find.byKey(const Key('post-hero-shuttle'));
+    final listScroll = tester.widget<SingleChildScrollView>(
+      find.byKey(
+        PageStorageKey<String>('page-scroll-view-${currentPath(tester)}'),
+      ),
+    );
+    listScroll.controller!.jumpTo(40);
+    await tester.pump();
+    expect(listScroll.controller!.offset, 40);
+    expect(shuttle, findsNothing);
+
+    await tester.tap(card);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 160));
+    expect(shuttle, findsOneWidget);
+    expect(find.byKey(const Key('markdown-body')), findsNothing);
+    final oldRouteFades = tester.widgetList<FadeTransition>(
+      find.ancestor(
+        of: find.byType(PostsScreen),
+        matching: find.byType(FadeTransition),
+      ),
+    );
+    expect(
+      oldRouteFades.any((fade) => fade.opacity.value < 0.35),
+      isTrue,
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(milliseconds: 16));
+    await tester.pump(const Duration(milliseconds: 16));
+    expect(shuttle, findsOneWidget);
+    expect(find.byKey(const Key('markdown-body')), findsOneWidget);
+    expect(find.text('After math'), findsOneWidget);
+
+    await pumpBlogFrames(tester);
+    expect(currentPath(tester), '/posts/test-post');
+    expect(shuttle, findsNothing);
+    expect(find.byKey(const Key('article-header-test-post')), findsOneWidget);
+    expect(find.byKey(const Key('markdown-body')), findsOneWidget);
+    final articleScroll = tester.widget<SingleChildScrollView>(
+      find.byKey(
+        const PageStorageKey<String>('page-scroll-view-/posts/test-post'),
+      ),
+    );
+    expect(articleScroll.controller!.offset, 0);
+
+    final context = tester.element(find.byType(BlogShell));
+    expect(GoRouter.of(context).canPop(), isTrue);
+    GoRouter.of(context).pop();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 160));
+    expect(shuttle, findsOneWidget);
+
+    await pumpBlogFrames(tester);
+    expect(currentPath(tester), anyOf('/posts', '/posts/'));
+    expect(shuttle, findsNothing);
+    expect(card, findsOneWidget);
+    expect(listScroll.controller!.offset, 40);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('reduced motion skips the shared element flight', (tester) async {
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(
+      tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
+    );
+    await pumpBlog(tester, location: '/posts/');
+
+    await tester.tap(find.byKey(const Key('post-card-test-post')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(currentPath(tester), '/posts/test-post');
+    expect(find.byKey(const Key('post-hero-shuttle')), findsNothing);
+    expect(find.byKey(const Key('article-header-test-post')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('language and theme controls preserve a working route', (
     tester,
   ) async {
     await pumpBlog(tester);
+    expect(find.text('Zhiyuan 的博客'), findsOneWidget);
+    expect(find.textContaining('专注于做感兴趣的领域'), findsOneWidget);
+    expect(find.textContaining('Kimi Linear'), findsNothing);
+    expect(find.textContaining('Kimi Delta Attention'), findsNothing);
+    expect(
+      tester
+          .widgetList<Title>(
+            find.descendant(
+              of: find.byType(BlogShell),
+              matching: find.byType(Title),
+            ),
+          )
+          .single
+          .title,
+      'Zhiyuan 的博客',
+    );
     await tester.tap(find.byKey(const Key('language-button')));
     await pumpBlogFrames(tester);
     expect(currentPath(tester), '/en');
     expect(find.text('From the blog'), findsOneWidget);
+    expect(find.text("Zhiyuan's Blog"), findsOneWidget);
+    expect(
+      tester
+          .widgetList<Title>(
+            find.descendant(
+              of: find.byType(BlogShell),
+              matching: find.byType(Title),
+            ),
+          )
+          .single
+          .title,
+      "Zhiyuan's Blog",
+    );
     await tester.tap(find.byKey(const Key('theme-button')));
+    await tester.pump();
+    expect(find.byKey(const Key('theme-ripple')), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byKey(const Key('theme-ripple')), findsOneWidget);
     await pumpBlogFrames(tester);
+    expect(find.byKey(const Key('theme-ripple')), findsNothing);
     final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
     expect(app.themeMode, ThemeMode.dark);
     expect(currentPath(tester), '/en');
